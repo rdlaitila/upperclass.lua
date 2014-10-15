@@ -1,45 +1,31 @@
-local myclass, public, private, constant = class:define("MyClass")
+local myclass, public, private, protected, static = class:define("MyClass")
 
--- Publically accessible property
-public.myPublicProperty = {"1", 2, "tree"}
+--
+-- Holds the RPC URL
+--
+private.rpcUrl = "http://www.something.com/RPC"
 
--- Privatly accessible property
-private.myPrivateProperty = "test"
+--
+-- Holds the RPC Username
+--
+private.rpcUsername = "admin"
 
--- constant property
-constant.myConstantProperty = true
+--
+-- Holds the RPC Password
+--
+private.rpcPassword = "123"
 
 --
 -- Class Constructor
 --
-function private:__construct()
-    print("MyClass Private Method __construct()")
+function private:__construct(RPCURL, RPCUSERNAME, RPCPASSWORD)
+    self.rpcUrl = RPCURL
+    self.rpcUsername = RPCUSERNAME
+    self.rpcPassword = RPCPASSWORD
 end
 
---
--- Lua index metamethod
---
-function private:__index()
+function public:getRpcUsername()
+    return self.rpcUsername
 end
-
---
--- Lua newindex metamethod
---
-function private:__newindex()
-end
-
---
--- Lua add metamethod
---
-function private:__add()
-end
-
---
--- Private method
---
-function private:getMyPrivateProperty()
-    return self.myPrivateProperty
-end
-
 
 return class:compile(myclass)
