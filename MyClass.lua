@@ -1,31 +1,43 @@
-local myclass, public, private, protected, static = class:define("MyClass")
+local myclass, public, private, protected = class:define("MyClass")
 
 --
--- Holds the RPC URL
+-- A public string property
 --
-private.rpcUrl = "http://www.something.com/RPC"
+public.publicStringProperty = "public string property"
 
 --
--- Holds the RPC Username
+-- A public boolean property
 --
-private.rpcUsername = "admin"
+public.publicBoolProperty = true
 
 --
--- Holds the RPC Password
+-- A public table property
 --
-private.rpcPassword = "123"
+public.publicTableProperty = {key1 = "value1", key2 = "value2"}
+
+--
+-- A public number property
+--
+public.publicNumberProperty = 20
+
+--
+-- A Private string Property
+--
+private.privateStringProperty = "private"
+
+--
+-- A Protected string Property
+--
+protected.protectedStringProperty = "private"
 
 --
 -- Class Constructor
 --
-function private:__construct(RPCURL, RPCUSERNAME, RPCPASSWORD)
-    self.rpcUrl = RPCURL
-    self.rpcUsername = RPCUSERNAME
-    self.rpcPassword = RPCPASSWORD
+function private:__construct()
 end
 
-function public:getRpcUsername()
-    return self.rpcUsername
+function private:myPrivateFunction()
+    return "Hello From Private Function"
 end
 
 return class:compile(myclass)
