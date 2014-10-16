@@ -15,3 +15,13 @@ function MyClass:method()
     return MyClass.property
 end
 ```
+
+```lua
+MyClass = require("MyClass")
+
+MyClassInstance = MyClass:new()
+
+print(MyClass.property)
+print(MyClass:method())
+```
+
