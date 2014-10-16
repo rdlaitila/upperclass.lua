@@ -33,7 +33,7 @@ print(MyClass.property)
 print(MyClass:method())
 ```
 
-**Second:** Many implimentations of *Class Commons* exist. Below is a short list of existing libraries that impliment the *Class Commons* syntax and provide an emulation of basic class symantics:
+**Second:** Many implimentations of *[Class Commons](https://github.com/bartbes/Class-Commons)* exist. Below is a short list of existing libraries that impliment the *[Class Commons](https://github.com/bartbes/Class-Commons)* syntax and provide an emulation of basic class symantics:
 
 * [MiddleClass](https://github.com/kikito/middleclass)
 * [30log](https://github.com/Yonaba/30log)
