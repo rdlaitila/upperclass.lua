@@ -72,7 +72,7 @@ end
 
 -- Fix bad results
 print("KEY", genstring(longest_key + 8), "RESULT", "MESSAGE")
-
+table.sort(tests, function(A, B) return A < B end)
 for key, value in pairs(tests) do
     if value == nil or value == true then
         total_failed = total_failed +1
@@ -84,8 +84,8 @@ for key, value in pairs(tests) do
             total_failed = total_failed + 1
         end
     end
-    
+    total_tests = total_tests + 1
     print(key, genstring( longest_key + 8 - key:len()  ), tests[key].result, tests[key].message)    
 end
 
-print("Total Tests:", total_tests, "Total Success:", total_success, "Total Failed", total_failed)
+print("Total Tests:", total_tests, "Total Success:", total_success, "Total Failed", total_failed, "% Sucess", (total_success / total_tests * 100) )
