@@ -6,7 +6,10 @@ Lua by iteself does not contain any sort of **Class** functionality. That is to 
 
 First: The lua community has coined a phrase called *Class Commons* where which the term is meant to mean the standard syntax to use when working with libraries that emulate class functionality. Example:
 
+Define a standard *Class Commons* class
+
 ```lua
+-- MyClass.lua
 local MyClass = class("MyClass")
 
 MyClass.property = value
@@ -14,9 +17,14 @@ MyClass.property = value
 function MyClass:method()
     return MyClass.property
 end
+
+return MyClass
 ```
 
+And to use the class
+
 ```lua
+-- main.lua
 MyClass = require("MyClass")
 
 MyClassInstance = MyClass:new()
