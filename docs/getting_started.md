@@ -92,11 +92,14 @@ MyClass = require('MyClass')
 MyClassInstance = MyClass:new()
 
 -- Should print "Hello World"
-print( MyClassInstance.publicStringProperty )
+print( MyClassInstance.publicStringProperty ) -- "Hello World"
 
 -- Should print true
-print( MyClassInstance:getIsClassConstructed() )
+print( MyClassInstance:getIsClassConstructed() ) -- True
 
 -- Should error with private member access denied
-print( MyClassInstance.isClassConstructed )
+print( MyClassInstance.isClassConstructed ) -- Error
+
+-- We can also access the class statically, which should return false
+print( MyClass:getIsClassConstructed() ) -- False
 ```
