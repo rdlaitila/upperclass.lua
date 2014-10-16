@@ -46,5 +46,57 @@ Upperclass is just another implimentation and variation of the *[Class Commons](
 * Ability to utilize class as a static (singlton) class or as any number of generated instances
 * Ability to define and enforce class property types **String**, **Boolean**, **Table**, and **Number** and fail when those constraints are violated.
 * Ability to carry class member scopes and through inheritence
-* Simply class definition syntax
-* Provide strong consistency 
+* Simplify class definition syntax
+
+# Example
+
+Create a file called **MyClass.lua** in your project directory. Add content:
+
+```lua
+local myclass, public, private, protected = class:define("MyClass")
+
+--
+-- A Private Boolean Property
+--
+private.isClassConstructed = false
+
+--
+-- A Public String Property
+--
+public.publicStringProperty = "Hello World"
+
+--
+-- Class Constructor
+--
+function private:__construct()
+    self.isClassConstructed = true
+end
+
+--
+-- Get If Class Is Constructed
+--
+function public:getIsClassConstructed()
+    return self.isClassConstructed
+end
+
+return class:compile(myclass)
+```
+
+Then in your project main.lua, add the following:
+
+```lua
+class = require('upperclass')
+MyClass = require('MyClass')
+
+-- Create instance of our class
+MyClassInstance = MyClass:new()
+
+-- Should print "Hello World"
+print( MyClassInstance.publicStringProperty )
+
+-- Should print true
+print( MyClassInstance:getIsClassConstructed() )
+
+-- Should error with private member access denied
+print( MyClassInstance.isClassConstructed )
+```
