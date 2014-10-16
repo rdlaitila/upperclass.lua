@@ -38,3 +38,10 @@ print(MyClass:method())
 * [MiddleClass](https://github.com/kikito/middleclass)
 * [30log](https://github.com/Yonaba/30log)
 
+# Upperclass
+
+Upperclass is just another implimentation and variation of the *[Class Commons](https://github.com/bartbes/Class-Commons)* idea. However, Upperclass was built to solve the following limitations of other *[Class Commons](https://github.com/bartbes/Class-Commons)* systems:
+
+* Ability to define scoped class members of types **Public**, **Private**, and **Protected**
+* Ability to carry class member scopes through inheritence
+* Simply class definition syntax
