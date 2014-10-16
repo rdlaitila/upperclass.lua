@@ -42,6 +42,9 @@ print(MyClass:method())
 
 Upperclass is just another implimentation and variation of the *[Class Commons](https://github.com/bartbes/Class-Commons)* idea. However, Upperclass was built to solve the following limitations of other *[Class Commons](https://github.com/bartbes/Class-Commons)* systems:
 
-* Ability to define scoped class members of types **Public**, **Private**, and **Protected**
-* Ability to carry class member scopes through inheritence
+* Ability to define class members of scopes **Public**, **Private**, and **Protected**
+* Ability to utilize class as a static (singlton) class or as any number of generated instances
+* Ability to define and enforce class property types **String**, **Boolean**, **Table**, and **Number** and fail when those constraints are violated.
+* Ability to carry class member scopes and through inheritence
 * Simply class definition syntax
+* Provide strong consistency 
