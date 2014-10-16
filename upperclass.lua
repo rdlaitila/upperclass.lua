@@ -151,16 +151,13 @@ function upperclass:compile(CLASS)
     -- Classdef Metamethod __index
     --
     function classmt.__index(TABLE, KEY)
-        print("__INDEX: ", TABLE, KEY)
-        
         -- Return new if called
         if KEY == "new" then
             return rawget(TABLE, KEY)
         end
         
         -- Get caller function for use in private and protected lookups
-        local caller = debug.getinfo(2)
-        print("CALLER:", caller.name, caller.func)
+        local caller = debug.getinfo(2)        
         
         -- Grab reference to class instance table
         local inst = rawget(TABLE, "__inst__")
@@ -213,8 +210,6 @@ function upperclass:compile(CLASS)
     -- Classdef Metamethod __newindex
     --
     function classmt.__newindex(TABLE, KEY, VALUE)
-        --print("__NEWINDEX: ", TABLE, KEY, VALUE)
-        
         -- Get caller function for use in private and protected lookups
         local caller = debug.getinfo(2)
         

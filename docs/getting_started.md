@@ -45,7 +45,7 @@ Upperclass is just another implimentation and variation of the *[Class Commons](
 * Ability to define class members of scopes **Public**, **Private**, and **Protected**
 * Ability to utilize class as a static (singlton) class or as any number of generated instances
 * Ability to define and enforce class property types **String**, **Boolean**, **Table**, and **Number** and fail when those constraints are violated.
-* Ability to carry class member scopes and through inheritence
+* Ability to carry class member scopes and types through inheritence
 * Simplify class definition syntax
 
 # Example

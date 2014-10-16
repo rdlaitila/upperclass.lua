@@ -1,7 +1,7 @@
 --
 -- MyClass
 --
-local myclass, public, private, protected = class:define("MyClass")
+local mybaseclass, public, private, protected = upperclass:define("MyBaseClass")
 
 --
 -- A public string property
@@ -98,4 +98,4 @@ end
 --
 -- Return compiled class
 --
-return class:compile(myclass)
+return upperclass:compile(mybaseclass)
