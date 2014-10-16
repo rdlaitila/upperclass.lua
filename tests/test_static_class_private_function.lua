@@ -1,7 +1,16 @@
-local MyClass = require('tests.MyBaseClass')
+local MyClass = nil
+local status, err = nil
+
+status, err = pcall(function()
+    MyClass = require('tests.MyBaseClass')
+end)
+
+if status == false then
+    return {result = false, message = err}    
+end
 
 -- Call a private function from outside of class
-local status, err = pcall(function () 
+status, err = pcall(function () 
     MyClass:privateFunction()
 end)
 

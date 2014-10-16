@@ -8,7 +8,7 @@ local SCOPE_PROTECTED = 2
 local SCOPE_PUBLIC = 3
 
 --
--- Define some member tyep properties for use internally
+-- Define some member type properties for use internally
 --
 local MEMBER_TYPE_PROPERTY = 1
 local MEMBER_TYPE_FUNCTION = 2
@@ -194,7 +194,7 @@ function upperclass:compile(CLASS)
                             return members[a].value
                         end
                     else
-                        error("Attempt to access private member from outside of class is disallowed")
+                        error("Attempt to access private member '".. KEY .."' from outside of class '".. imp.name .."' is disallowed")
                     end                
                 elseif members[a].scope == SCOPE_PROTECTED then
                     error("Attempt to access protected member is not implimented")
