@@ -1,6 +1,9 @@
 class   = require('upperclass')
 MyClass = require('MyClass')
 
-print(MyClass.publicBoolProperty)
-MyClass.publicBoolProperty = false
-print(MyClass.publicBoolProperty)
+MyClassInstance = MyClass:new()
+
+class:dumpMembers(MyClassInstance)
+
+print(MyClassInstance:getPrivateBoolProperty())
+--print(MyClassInstance.getPrivateBoolProperty())

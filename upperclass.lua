@@ -151,7 +151,7 @@ function upperclass:compile(CLASS)
     -- Classdef Metamethod __index
     --
     function classmt.__index(TABLE, KEY)
-        --print("__INDEX: ", TABLE, KEY)
+        print("__INDEX: ", TABLE, KEY)
         
         -- Return new if called
         if KEY == "new" then
@@ -160,6 +160,7 @@ function upperclass:compile(CLASS)
         
         -- Get caller function for use in private and protected lookups
         local caller = debug.getinfo(2)
+        print("CALLER:", caller.name, caller.func)
         
         -- Grab reference to class instance table
         local inst = rawget(TABLE, "__inst__")
@@ -180,7 +181,7 @@ function upperclass:compile(CLASS)
                     else -- Return value of class implimentation
                         return members[a].value
                     end
-                elseif members[a].scope == SCOPE_PRIVATE then
+                elseif members[a].scope == SCOPE_PRIVATE then                
                     local privatecallerfound = false
                     for b=1, #members do
                         if members[a].type == MEMBER_TYPE_FUNCTION then
@@ -197,7 +198,7 @@ function upperclass:compile(CLASS)
                         end
                     else
                         error("Attempt to access private member from outside of class is disallowed")
-                    end
+                    end                
                 elseif members[a].scope == SCOPE_PROTECTED then
                     error("Attempt to access protected member is not implimented")
                 end

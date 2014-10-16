@@ -1,3 +1,6 @@
+--
+-- MyClass
+--
 local myclass, public, private, protected = class:define("MyClass")
 
 --
@@ -21,14 +24,24 @@ public.publicTableProperty = {key1 = "value1", key2 = "value2"}
 public.publicNumberProperty = 20
 
 --
--- A Private string Property
+-- A Private string property
 --
-private.privateStringProperty = "private"
+private.privateStringProperty = "private string property"
 
 --
--- A Protected string Property
+-- A Private boolean property
 --
-protected.protectedStringProperty = "private"
+private.privateBoolProperty = true
+
+--
+-- A Private table property
+--
+private.privateTableProperty = {key1 = "value1", key2 = "value2"}
+
+--
+-- A Private number property
+--
+private.privateNumberProperty = 20
 
 --
 -- Class Constructor
@@ -36,8 +49,53 @@ protected.protectedStringProperty = "private"
 function private:__construct()
 end
 
-function private:myPrivateFunction()
+--
+-- Class __index Metamethod
+--
+function private:__index(TABLE, KEY)
+end
+
+--
+-- Class __newindex Metamethod
+--
+function private:__newindex(TABLE, KEY, VALUE)
+end
+
+--
+-- Class __tostring Metamethod
+--
+function private:__tostring()
+end
+
+--
+-- Get Private Bool Property
+--
+function public:getPrivateBoolProperty()
+    return self.privateBoolProperty
+end
+
+--
+-- A Public function
+--
+function public:publicFunction()
+    return "Hello From Public Function"
+end
+
+--
+-- A Private function
+--
+function private:privateFunction()
     return "Hello From Private Function"
 end
 
+--
+-- A Protected function
+--
+function protected:protectedFunction()
+    return "Hello From Protected Function"
+end
+
+--
+-- Return compiled class
+--
 return class:compile(myclass)
