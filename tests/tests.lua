@@ -49,3 +49,43 @@ local tests = {
     test_inherited_class_protected_property_number  = require('tests.test_inherited_class_protected_property_number'),
     test_inherited_class_protected_function         = require('tests.test_inherited_class_protected_function')
 }
+
+local total_tests = 0
+local total_success = 0
+local total_failed = 0
+local longest_key = 0
+
+-- Get the longest key
+for key, value in pairs(tests) do    
+    if key:len() > longest_key then        
+        longest_key = key:len()
+    end
+end
+
+local function genstring(len)
+    local str = ""
+    for a=1, len do
+        str = str .. " "
+    end
+    return str
+end
+
+-- Fix bad results
+print("KEY", genstring(longest_key + 8), "RESULT", "MESSAGE")
+
+for key, value in pairs(tests) do
+    if value == nil or value == true then
+        total_failed = total_failed +1
+        tests[key] = {result = false, message = "Unknown Failure"}
+    elseif type(value) == "table" then
+        if value.result == true then
+            total_success = total_success + 1
+        elseif value.result == false then
+            total_failed = total_failed + 1
+        end
+    end
+    
+    print(key, genstring( longest_key + 8 - key:len()  ), tests[key].result, tests[key].message)    
+end
+
+print("Total Tests:", total_tests, "Total Success:", total_success, "Total Failed", total_failed)
