@@ -50,6 +50,21 @@ local tests = {
     test_inherited_class_protected_function         = require('tests.test_inherited_class_protected_function')
 }
 
+-- Get list of keys
+local keyset={}
+local n=0
+
+for k,v in pairs(tests) do
+  n=n+1
+  keyset[n]=k
+end
+
+-- Sort our keys
+table.sort(keyset, function(A, B)
+    return A < B
+end)
+
+-- Test stats
 local total_tests = 0
 local total_success = 0
 local total_failed = 0
@@ -70,22 +85,24 @@ local function genstring(len)
     return str
 end
 
--- Fix bad results
-print("KEY", genstring(longest_key + 8), "RESULT", "MESSAGE")
-table.sort(tests, function(A, B) return A < B end)
-for key, value in pairs(tests) do
-    if value == nil or value == true then
+-- print results
+print(" ")
+print("TEST", genstring(longest_key + 8), "RESULT", "MESSAGE")
+for key, value in pairs(keyset) do
+    if tests[value] == nil or tests[value] == true then
         total_failed = total_failed +1
-        tests[key] = {result = false, message = "Unknown Failure"}
-    elseif type(value) == "table" then
-        if value.result == true then
+        tests[value] = {result = false, message = "Unknown Failure"}
+    elseif type(tests[value]) == "table" then
+        if tests[value].result == true then
             total_success = total_success + 1
-        elseif value.result == false then
+        elseif tests[value].result == false then
             total_failed = total_failed + 1
         end
     end
     total_tests = total_tests + 1
-    print(key, genstring( longest_key + 8 - key:len()  ), tests[key].result, tests[key].message)    
+    print(value, genstring( longest_key + 8 - value:len()  ), tests[value].result, tests[value].message)    
 end
 
+print(" ")
 print("Total Tests:", total_tests, "Total Success:", total_success, "Total Failed", total_failed, "% Sucess", (total_success / total_tests * 100) )
+print(" ")

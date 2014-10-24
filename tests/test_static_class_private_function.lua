@@ -1,22 +1,21 @@
 local MyClass = nil
 local status, err = nil
 
+-- Check for error requiring the class
 status, err = pcall(function()
     MyClass = require('tests.MyBaseClass')
 end)
-
 if status == false then
     return {result = false, message = err}    
 end
 
--- Call a private function from outside of class
+-- Attempt to call a private function from outside of class
 status, err = pcall(function () 
     MyClass:privateFunction()
 end)
-
--- If we errored, good deal. We should not be able to call the private function
-if status == false then
-    return {result = true, message = err}
-else
-    return {result = false, message = "Should not be able to call private function from outside class"}
+if status == true then
+    return {result = false, message = "Attempt to access static private function outside of class was successful. This is bad!"}
 end
+
+-- No other failures, return.
+return {result = true, message = "Test completed successfully"}

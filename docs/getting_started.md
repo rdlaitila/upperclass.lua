@@ -53,7 +53,7 @@ Upperclass is just another implimentation and variation of the *[Class Commons](
 Create a file called **MyClass.lua** in your project directory. Add content:
 
 ```lua
-local myclass, public, private, protected = class:define("MyClass")
+local myclass, public, private, protected = upperclass:define("MyClass")
 
 --
 -- A Private Boolean Property
@@ -79,13 +79,13 @@ function public:getIsClassConstructed()
     return self.isClassConstructed
 end
 
-return class:compile(myclass)
+return upperclass:compile(myclass)
 ```
 
 Then in your project main.lua, add the following:
 
 ```lua
-class = require('upperclass')
+upperclass = require('upperclass')
 MyClass = require('MyClass')
 
 -- Create instance of our class

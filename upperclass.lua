@@ -14,12 +14,6 @@ local MEMBER_TYPE_PROPERTY = 1
 local MEMBER_TYPE_FUNCTION = 2
 
 --
--- Define error strings
---
-local ERRORS = {}
-ERRORS[1] = "Cannot dump class members. Supplied class does not contain __imp__ table"
-
---
 -- Upperclass Define function.
 --
 function upperclass:define(CLASS_NAME)
@@ -35,8 +29,8 @@ function upperclass:define(CLASS_NAME)
     -- Store the class file 
     classdef.__imp__.file = debug.getinfo(2, "S").source:sub(2) 
     
-    -- Create table to hold our class memebers
-    -- Schema: {scope=[PUBLIC|PRIVATE|PROTECTED|STATIC], type=[PROPERTY|METHOD], name="[MEMBER_NAME]", value=[DATA_OR_REFERENCE]}
+    -- Create table to hold our class memebers. table KEY is member name
+    -- Schema: {scope=[PUBLIC|PRIVATE|PROTECTED], type=[PROPERTY|FUNCTION], value=[DATA_OR_REFERENCE]}
     classdef.__imp__.members = {}
   
     -- Create tables to hold singlton instance values (a.k.a static class)
@@ -54,54 +48,62 @@ function upperclass:define(CLASS_NAME)
     --
     -- Classdef Metatable __newindex
     --
-    function classmt.__newindex(TABLE, KEY, VALUE)           
+    function classmt.__newindex(TABLE, KEY, VALUE)
+        -- Get our class definition
+        local classdef = getmetatable(TABLE).classdef
+        
+        -- Get our implimentation table
+        local imp = rawget(classdef, "__imp__")
+        
+        -- Get our implimentation members table
+        local members = rawget(imp, "members")
+        
+        -- Ensure we are not redefining an existing member
+        if members[KEY] ~= nil then
+            error("Attempt to redefine existing member '"..KEY.."' is disallowed")
+        end
+        
+        -- Create our members based on type and scope
         if type(VALUE) == "string" or type(VALUE) == "number" or 
-           type(VALUE) == "boolean" or type(VALUE) == "table" then
-            
-            if TABLE == rawget(classmt.classdef, "public") then
-                table.insert(classmt.classdef.__imp__.members, {
-                    scope = SCOPE_PUBLIC,
-                    name = KEY,
+           type(VALUE) == "boolean" or type(VALUE) == "table" then            
+            if TABLE == rawget(classdef, "public") then
+                members[KEY] = {
+                    scope = SCOPE_PUBLIC,                    
                     value = VALUE,
                     type = MEMBER_TYPE_PROPERTY
-                })
-            elseif TABLE == rawget(classmt.classdef, "private") then
-                table.insert(classmt.classdef.__imp__.members, {
-                    scope = SCOPE_PRIVATE,
-                    name = KEY,
+                }                
+            elseif TABLE == rawget(classdef, "private") then
+                members[KEY] = {
+                    scope = SCOPE_PRIVATE,                    
                     value = VALUE,
                     type = MEMBER_TYPE_PROPERTY
-                })
-            elseif TABLE == rawget(classmt.classdef, "protected") then
-                table.insert(classmt.classdef.__imp__.members, {
-                    scope = SCOPE_PROTECTED,
-                    name = KEY,
+                }
+            elseif TABLE == rawget(classdef, "protected") then
+                members[KEY] = {
+                    scope = SCOPE_PROTECTED,                    
                     value = VALUE,
                     type = MEMBER_TYPE_PROPERTY
-                })
+                }                
             end            
         elseif type(VALUE) == "function" then            
-            if TABLE == rawget(classmt.classdef, "public") then
-                table.insert(classmt.classdef.__imp__.members, {
-                    scope = SCOPE_PUBLIC,
-                    name = KEY,
+            if TABLE == rawget(classdef, "public") then
+                members[KEY] = {
+                    scope = SCOPE_PUBLIC,                    
                     value = VALUE,
                     type = MEMBER_TYPE_FUNCTION
-                })
-            elseif TABLE == rawget(classmt.classdef, "private") then
-                table.insert(classmt.classdef.__imp__.members, {
-                    scope = SCOPE_PRIVATE,
-                    name = KEY,
+                }                
+            elseif TABLE == rawget(classdef, "private") then
+                members[KEY] = {
+                    scope = SCOPE_PRIVATE,                    
                     value = VALUE,
                     type = MEMBER_TYPE_FUNCTION
-                })
-            elseif TABLE == rawget(classmt.classdef, "protected") then
-                table.insert(classmt.classdef.__imp__.members, {
-                    scope = SCOPE_PROTECTED,
-                    name = KEY,
+                }
+            elseif TABLE == rawget(classdef, "protected") then
+                members[KEY] = {
+                    scope = SCOPE_PROTECTED,                    
                     value = VALUE,
                     type = MEMBER_TYPE_FUNCTION
-                })            
+                }        
             end
         end
     end
@@ -130,7 +132,8 @@ function upperclass:compile(CLASS)
     --
     -- Classdef new
     --
-    function CLASS.new(self)
+    function CLASS.new(self, ...)
+        local args = {...}
         local instance = {}
         
         -- Setup reference to class implimentation
@@ -168,42 +171,39 @@ function upperclass:compile(CLASS)
         -- Grab reference to class implimentation members
         local members = rawget(imp, "members")
         
-        -- Loop through class implimentation members, looking for 
-        -- a valid match
-        for a=1, #members do
-            if members[a].name == KEY then
-                if members[a].scope == SCOPE_PUBLIC then                  
+        -- Attempt to locate a valid member
+        if members[KEY] == nil then
+            error("Attempt to access non-existant member "..KEY.." within class "..imp.name)
+        else
+            if members[KEY].scope == SCOPE_PUBLIC then                  
+                if inst.member_values[KEY] ~= nil then -- If we have a stored value, return it
+                    return inst.member_values[KEY]
+                else -- Return value of class implimentation
+                    return members[KEY].value
+                end
+            elseif members[KEY].scope == SCOPE_PRIVATE then                
+                local privatecallerfound = false
+                for _, member in pairs(members) do
+                    if member.type == MEMBER_TYPE_FUNCTION then
+                        if member.value == caller.func then
+                            privatecallerfound = true
+                        end
+                    end
+                end
+                    
+                if privatecallerfound == true then
                     if inst.member_values[KEY] ~= nil then -- If we have a stored value, return it
                         return inst.member_values[KEY]
                     else -- Return value of class implimentation
-                        return members[a].value
+                        return members[KEY].value
                     end
-                elseif members[a].scope == SCOPE_PRIVATE then                
-                    local privatecallerfound = false
-                    for b=1, #members do
-                        if members[a].type == MEMBER_TYPE_FUNCTION then
-                            if members[a].value == caller.func then                                
-                            end
-                        end
-                    end
-                    
-                    if privatecallerfound == true then
-                        if inst.member_values[KEY] ~= nil then -- If we have a stored value, return it
-                            return inst.member_values[KEY]
-                        else -- Return value of class implimentation
-                            return members[a].value
-                        end
-                    else
-                        error("Attempt to access private member '".. KEY .."' from outside of class '".. imp.name .."' is disallowed")
-                    end                
-                elseif members[a].scope == SCOPE_PROTECTED then
-                    error("Attempt to access protected member is not implimented")
-                end
+                else
+                    error("Attempt to access private member '".. KEY .."' from outside of class '".. imp.name .."' is disallowed")
+                end                
+            elseif members[a].scope == SCOPE_PROTECTED then
+                error("Attempt to access protected member is not implimented")
             end
-        end
-        
-        -- We found no members in class implimentation. We should fail
-        error("Attempt to access non-existant member "..KEY.." within class "..imp.name)
+        end        
     end
     
     --
@@ -222,8 +222,14 @@ function upperclass:compile(CLASS)
         -- Grab reference to class implimentation members
         local members = rawget(imp, "members")
         
-        -- Loop through class implimentation members, looking for 
-        -- a valid match
+        -- Attempt to locate valid member
+        if members[KEY] == nil then
+            error("Attempt to set value for non-existant member '"..KEY.."' is disallowed")
+        else
+            -- do set
+        end
+        
+        
         local subject_member = nil
         for a=1, #members do            
             if members[a].name == KEY then                
