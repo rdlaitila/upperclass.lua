@@ -187,6 +187,7 @@ function upperclass:compile(CLASS)
                     if member.type == MEMBER_TYPE_FUNCTION then
                         if member.value == caller.func then
                             privatecallerfound = true
+                            break
                         end
                     end
                 end
@@ -222,43 +223,26 @@ function upperclass:compile(CLASS)
         -- Grab reference to class implimentation members
         local members = rawget(imp, "members")
         
-        -- Attempt to locate valid member
+        -- Attempt to locate valid member and ensure we are not attempting set of a member function
         if members[KEY] == nil then
             error("Attempt to set value for non-existant member '"..KEY.."' is disallowed")
-        else
-            -- do set
-        end
-        
-        
-        local subject_member = nil
-        for a=1, #members do            
-            if members[a].name == KEY then                
-                if members[a].type == MEMBER_TYPE_FUNCTION then
-                    error("Attempt to override class member function at runtime is disallowed")
-                elseif members[a].type == MEMBER_TYPE_PROPERTY then
-                    subject_member = members[a]
-                end
-            end
-        end
-        
-        -- Fail if we have no subject member
-        if subject_member == nil then
-            error("Attempt to set member property failed. Unable to locate member property")
+        elseif members[KEY].type == MEMBER_TYPE_FUNCTION  then
+            error("Attempt to set value of member function '"..KEY.."' is disallowed")        
         end
         
         -- Ensure that the inboudn value type matches the implimentation type
-        if type(VALUE) ~= type(subject_member.value) then
-            error("Attmept to overwrite member property of type "..type(subject_member.value).." with a "..type(VALUE).." is disallowed")
+        if type(VALUE) ~= type(members[KEY].value) then
+            error("Attmept to overwrite member property of type "..type(members[KEY].value).." with a "..type(VALUE).." is disallowed")
         end
         
         -- Set our value
-        if subject_member.scope == SCOPE_PUBLIC then
+        if members[KEY].scope == SCOPE_PUBLIC then
             inst.member_values[KEY] = VALUE
-        elseif subject_member.scope == SCOPE_PRIVATE then
+        elseif members[KEY].scope == SCOPE_PRIVATE then
             local privatecallerfound = false
-            for b=1, #members do
-                if members[a].type == MEMBER_TYPE_FUNCTION then
-                    if members[a].value == caller.func then
+            for _, member in pairs(members) do
+                if member.type == MEMBER_TYPE_FUNCTION then
+                    if member.value == caller.func then
                         privatecallerfound = true
                         break
                     end
