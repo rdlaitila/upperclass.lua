@@ -6,6 +6,7 @@ local upperclass = {}
 UPPERCLASS_SCOPE_PRIVATE = 1
 UPPERCLASS_SCOPE_PROTECTED = 2
 UPPERCLASS_SCOPE_PUBLIC = 3
+UPPERCLASS_SCOPE_NOBODY = 4
 
 --
 -- Define some member type properties for use internally
@@ -22,7 +23,7 @@ function upperclass:define(CLASS_NAME, PARENT)
     
     -- Gracefully take over globals: public, private, protected, property
     -- we will set them back to orig values after definition
-    classdef.public_orig_value     = rawget(_G, "public")
+    classdef.public_orig_value     = rawget(_G, "public")    
     classdef.private_orig_value    = rawget(_G, "private")
     classdef.protected_orig_value  = rawget(_G, "protected")
     classdef.property_orig_value   = rawget(_G, "property")
@@ -140,21 +141,21 @@ function upperclass:define(CLASS_NAME, PARENT)
             if TABLE == rawget(_G, "public") then
                 members[KEY] = {
                     scope_get = UPPERCLASS_SCOPE_PUBLIC,                    
-                    scope_set = nil,                    
+                    scope_set = UPPERCLASS_SCOPE_NOBODY,                    
                     value = VALUE,
                     type = UPPERCLASS_MEMBER_TYPE_FUNCTION
                 }                
             elseif TABLE == rawget(_G, "private") then
                 members[KEY] = {
                     scope_get = UPPERCLASS_SCOPE_PRIVATE,                    
-                    scope_set = nil,                    
+                    scope_set = UPPERCLASS_SCOPE_NOBODY,                    
                     value = VALUE,
                     type = UPPERCLASS_MEMBER_TYPE_FUNCTION
                 }
             elseif TABLE == rawget(_G, "protected") then
                 members[KEY] = {
                     scope_get = UPPERCLASS_SCOPE_PROTECTED,                    
-                    scope_set = nil,
+                    scope_set = UPPERCLASS_SCOPE_NOBODY,
                     value = VALUE,
                     type = UPPERCLASS_MEMBER_TYPE_FUNCTION
                 }        
@@ -185,6 +186,7 @@ function upperclass:define(CLASS_NAME, PARENT)
             members[classmt.last_property_name].scope_set = UPPERCLASS_SCOPE_PUBLIC
             members[classmt.last_property_name].value = nil
         else
+            -- Value is first index key, otherwise nil (doesn't exist)
             members[classmt.last_property_name].value = tables[3][1] or nil
             
             -- Determine getter scope
@@ -194,6 +196,8 @@ function upperclass:define(CLASS_NAME, PARENT)
                 members[classmt.last_property_name].scope_get = UPPERCLASS_SCOPE_PRIVATE
             elseif tables[3].get == 'protected' then
                 members[classmt.last_property_name].scope_get = UPPERCLASS_SCOPE_PROTECTED
+            elseif tables[3].get == 'nobody' then
+                members[classmt.last_property_name].scope_get = UPPERCLASS_SCOPE_NOBODY
             else
                 members[classmt.last_property_name].scope_get = UPPERCLASS_SCOPE_PUBLIC
             end
@@ -205,6 +209,8 @@ function upperclass:define(CLASS_NAME, PARENT)
                 members[classmt.last_property_name].scope_set = UPPERCLASS_SCOPE_PRIVATE
             elseif tables[3].set == 'protected' then
                 members[classmt.last_property_name].scope_set = UPPERCLASS_SCOPE_PROTECTED
+            elseif tables[3].set == 'nobody' then
+                members[classmt.last_property_name].scope_set = UPPERCLASS_SCOPE_NOBODY
             else
                 members[classmt.last_property_name].scope_set = UPPERCLASS_SCOPE_PUBLIC
             end
