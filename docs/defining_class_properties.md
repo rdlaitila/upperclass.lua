@@ -45,15 +45,15 @@ In upperclass you can define the access scope for both getting the property and 
 --
 -- Property in which public can read, but only the class can modify
 --
-property : myCustomScopedProperty { "myValue" ; get='public' ; set='private }
+property : myCustomScopedProperty { "myValue" ; get='public' ; set='private' }
 
 --
 -- Property in which is effectivly a constant
 --
-property : myConstantProperty { "myValue" ; get='public' ; set=nil }
+property : myConstantProperty { "myValue" ; get='public' ; set='nobody' }
 ```
 
 The schema for this definition is:
 
-* property : [PROPERTY_NAME] {  [INITIAL_VALUE] ; get='public|private|protected|nil' ; set='public|private|protected|nil' }
+* property : [PROPERTY_NAME] {  [INITIAL_VALUE] ; get='public|private|protected|nobody' ; set='public|private|protected|nobody' }
 
