@@ -1,6 +1,4 @@
-local MyBaseClass = upperclass:define("MyBaseClass")
-
-property : testing {"testing" ; get='public' ; set='private'}
+local _ = upperclass:define("MyBaseClass")
 
 --
 -- A public string property
@@ -99,4 +97,4 @@ end
 --
 -- Return compiled class
 --
-return upperclass:compile(MyBaseClass, {ALLOW_STATIC=true, ALLOW_INSTANCE=true, STRICT_TYPES=true})
+return upperclass:compile(_)
