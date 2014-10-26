@@ -39,7 +39,7 @@ function public:getIsClassConstructed()
     return self.isClassConstructed
 end
 
-return upperclass:compile(myclass)
+return upperclass:compile(myclass, {ALLOW_STATIC=true, ALLOW_INSTANCE=true, STRICT_TYPES=true})
 ```
 
 Then in your project main.lua, add the following:
@@ -49,7 +49,7 @@ upperclass = require('upperclass')
 MyClass = require('MyClass')
 
 -- Create instance of our class
-MyClassInstance = MyClass:new()
+MyClassInstance = MyClass()
 
 -- Should print "Hello World"
 print( MyClassInstance.publicStringProperty ) -- "Hello World"
