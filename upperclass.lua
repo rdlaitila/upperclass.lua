@@ -44,6 +44,13 @@ function upperclass:define(CLASS_NAME, PARENT)
     -- Create tables to hold singlton instance values (a.k.a static class)
     classdef.__inst__ = {}
     classdef.__inst__.member_values = {}
+    classdef.__inst__.isInstance = false
+  
+    -- Create table to hold reference to our parent class, if specified
+    classdef.__parent__ = PARENT or nil
+  
+    -- Create table to hold references to our child classes, if this class is inherited
+    classdef.__children__ = {}
   
     -- During the definition stage, the user may place property and method definitions in the following tables
     rawset(_G, "public",    {})
@@ -109,7 +116,7 @@ function upperclass:define(CLASS_NAME, PARENT)
         
         -- Ensure we are not redefining an existing member
         if members[KEY] ~= nil then
-            error("Attempt to redefine existing member '"..KEY.."' in class '"..imp.name.."' is disallowed")
+            error("Attempt to redefine existing member '"..KEY.."' in class '"..imp.name.."' is disallowed")                
         end
                 
         -- Create our members based on type and scope
@@ -259,6 +266,18 @@ function upperclass:compile(CLASS)
         }
     end
     
+    -- Define __constructparent() method
+    CLASS.__imp__.members["__constructparent"] = {
+        scope = UPPERCLASS_SCOPE_PRIVATE,
+        value = function(...)
+            local constructArgs = {...}
+            if self.__parent__.__inst__.isInstance == false then
+                self.__parent__ = self.__parent__(unpack(constructArgs))
+            end
+        end,
+        type = UPPERCLASS_MEMBER_TYPE_FUNCTION
+    }
+    
     --
     -- Classdef Metamethod __call
     --
@@ -293,21 +312,38 @@ function upperclass:compile(CLASS)
             
         -- Table to hold instance values
         instance.__inst__.member_values = {}
-            
+        
+        -- Set that this is an instance
+        instance.__inst__.isInstance = true
+        
+        -- Set parent reference
+        instance.__parent__ = self.__parent__
+        
         setmetatable(instance, getmetatable(self))
             
         -- Call class constructor
         local passargs = {}
-        if #arguments > 1 then for a=2, #arguments do table.insert(passargs, arguments[a]) end end        
-        imp.members["__construct"].value(instance, unpack(passargs))
-            
+        if #arguments > 1 then for a=2, #arguments do table.insert(passargs, arguments[a]) end end
+        local __construct = imp.members["__construct"].value
+        __construct(instance, unpack(passargs))
+        
+        -- Construct parent
+        if instance.__parent__ ~= nil and instance.__parent__.__inst__.isInstance == false then                         
+            instance.__parent__ = self.__parent__()
+        end
+        
         return instance   
     end
     
     --
     -- Classdef Metamethod __index
     --
-    function classmt.__index(TABLE, KEY)
+    function classmt.__index(TABLE, KEY)         
+        -- Ensure we return some important keys
+        if KEY == "__imp__" or KEY == "__inst__" or KEY == "__parent__" then
+            return rawget(TABLE, KEY)
+        end
+        
         -- Get caller function for use in private and protected lookups
         local caller = debug.getinfo(2)        
         
@@ -320,15 +356,23 @@ function upperclass:compile(CLASS)
         -- Grab reference to class implimentation members
         local members = rawget(imp, "members")
         
-        -- Attempt to locate a valid member
-        if members[KEY] == nil then
-            error("Attempt to access non-existant member "..KEY.." within class "..imp.name)
-        else
+        -- Return __constructparent if coming form class __construct
+        if KEY == "__constructparent" then
+            return function(self, ...)
+                self.__parent__ = self.__parent__(...)
+            end
+        end
+        
+        -- Holds our found value during member lookups
+        local returnValue = nil
+        
+        -- Attempt to locate a valid member        
+        if members[KEY] ~= nil then
             if members[KEY].scope_get == UPPERCLASS_SCOPE_PUBLIC then                  
                 if inst.member_values[KEY] ~= nil then -- If we have a stored value, return it
-                    return inst.member_values[KEY]
+                    returnValue = inst.member_values[KEY]
                 else -- Return value of class implimentation
-                    return members[KEY].value
+                    returnValue = members[KEY].value
                 end
             elseif members[KEY].scope_get == UPPERCLASS_SCOPE_PRIVATE then                
                 local privatecallerfound = false
@@ -343,17 +387,25 @@ function upperclass:compile(CLASS)
                     
                 if privatecallerfound == true then
                     if inst.member_values[KEY] ~= nil then -- If we have a stored value, return it
-                        return inst.member_values[KEY]
+                        returnValue = inst.member_values[KEY]
                     else -- Return value of class implimentation
-                        return members[KEY].value
+                        returnValue = members[KEY].value
                     end
                 else
                     error("Attempt to access private member '".. KEY .."' from outside of class '".. imp.name .."' is disallowed")
                 end                
-            elseif members[a].scope_get == UPPERCLASS_SCOPE_PROTECTED then
+            elseif members[KEY].scope_get == UPPERCLASS_SCOPE_PROTECTED then
                 error("Attempt to access protected member is not implimented")
             end
-        end        
+        else
+            returnValue = TABLE.__parent__[KEY]
+        end    
+        
+        if returnValue == nil then
+            error("Attempt to access non-existant member "..KEY.." within class "..imp.name)            
+        end
+        
+        return returnValue
     end
     
     --
@@ -372,39 +424,45 @@ function upperclass:compile(CLASS)
         -- Grab reference to class implimentation members
         local members = rawget(imp, "members")
         
-        -- Attempt to locate valid member and ensure we are not attempting set of a member function
-        if members[KEY] == nil then
-            error("Attempt to set value for non-existant member '"..KEY.."' is disallowed")
-        elseif members[KEY].type == UPPERCLASS_MEMBER_TYPE_FUNCTION  then
-            error("Attempt to set value of member function '"..KEY.."' with value '"..tostring(VALUE).."' in class '"..imp.name.."' is disallowed")        
-        end
-        
-        -- Ensure that the inboudn value type matches the implimentation type
-        if type(VALUE) ~= type(members[KEY].value) then
-            error("Attmept to overwrite member property '"..KEY.."' of type '"..type(members[KEY].value).."' with type '"..type(VALUE).."' in class '"..imp.name.."' is disallowed")
-        end
-        
         -- Set our value
-        if members[KEY].scope_set == UPPERCLASS_SCOPE_PUBLIC then
-            inst.member_values[KEY] = VALUE
-        elseif members[KEY].scope_set == UPPERCLASS_SCOPE_PRIVATE then
-            local privatecallerfound = false
-            for _, member in pairs(members) do
-                if member.type == UPPERCLASS_MEMBER_TYPE_FUNCTION then
-                    if member.value == caller.func then
-                        privatecallerfound = true
-                        break
-                    end
-                end
+        if members[KEY] ~= nil then
+            -- Error if we are trying to set value of a function member
+            if members[KEY].type == UPPERCLASS_MEMBER_TYPE_FUNCTION  then
+                error("Attempt to set value of member function '"..KEY.."' with value '"..tostring(VALUE).."' in class '"..imp.name.."' is disallowed")        
             end
             
-            if privatecallerfound == true then
-                inst.member_values[KEY] = VALUE                        
-            else
-                error("Attempt to set private class property '"..KEY.."' from outside of class '"..imp.name.."' is disallowed")
+            -- Ensure that the inboudn value type matches the implimentation type
+            if type(VALUE) ~= type(members[KEY].value) then
+                error("Attmept to overwrite member property '"..KEY.."' of type '"..type(members[KEY].value).."' with type '"..type(VALUE).."' in class '"..imp.name.."' is disallowed")
             end            
-        elseif subject_member.scope_set == UPPERCLASS_SCOPE_PROTECTED then
-            error("Attempt to set member property of type protected is not implimented")
+            
+            if members[KEY].scope_set == UPPERCLASS_SCOPE_PUBLIC then
+                inst.member_values[KEY] = VALUE
+            elseif members[KEY].scope_set == UPPERCLASS_SCOPE_PRIVATE then
+                local privatecallerfound = false
+                for _, member in pairs(members) do
+                    if member.type == UPPERCLASS_MEMBER_TYPE_FUNCTION then
+                        if member.value == caller.func then
+                            privatecallerfound = true
+                            break
+                        end
+                    end
+                end
+                
+                if privatecallerfound == true then
+                    inst.member_values[KEY] = VALUE                        
+                else
+                    error("Attempt to set private class property '"..KEY.."' from outside of class '"..imp.name.."' is disallowed")
+                end            
+            elseif members[KEY].scope_set == UPPERCLASS_SCOPE_PROTECTED then
+                error("Attempt to set member property of type protected is not implimented")
+            elseif members[KEY].scope_set == UPPERCLASS_SCOPE_NOBODY then
+                error("Attempt to set member property '"..KEY.."' of scope 'nobody' in class '"..imp.name.."' is disallowed")
+            end
+        elseif TABLE.__parent__ ~= nil then
+            TABLE.__parent__[KEY] = VALUE
+        else
+            error("Attempt to set non-existant member '"..KEY.."' with value '"..VALUE.."' in class '"..imp.name.."' is disallowed")
         end
     end
     

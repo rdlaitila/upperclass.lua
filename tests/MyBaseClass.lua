@@ -1,6 +1,6 @@
 local MyBaseClass = upperclass:define("MyBaseClass")
 
-property : testing {"testing" ; get='public' ; set='private'}
+property : testing {"testing advanced syntax" ; get='public' ; set='nobody'}
 
 --
 -- A public string property
@@ -46,8 +46,7 @@ private.privateNumberProperty = 20
 -- Class Constructor
 --
 function private:__construct(...)   
-    print("MyBaseClass Constructor")
-    print(...)    
+    print("MyBaseClass Constructor", ...)    
 end
 
 --

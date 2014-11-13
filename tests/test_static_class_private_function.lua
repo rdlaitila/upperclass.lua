@@ -1,9 +1,13 @@
 local MyClass = nil
 local status, err = nil
 
--- Check for error requiring the class
-status, err = pcall(function()
-    MyClass = require('tests.MyBaseClass')
+-- Check for error defining the class
+status, err = pcall(function()    
+    MyClass = upperclass:define("MyClass")
+    
+    function private:privateFunction()
+        return "hello"
+    end
 end)
 if status == false then
     return {result = false, message = err}    
@@ -11,7 +15,7 @@ end
 
 -- Attempt to call a private function from outside of class
 status, err = pcall(function () 
-    MyClass:privateFunction()
+    value = MyClass:privateFunction()
 end)
 if status == true then
     return {result = false, message = "Attempt to access static private function outside of class was successful. This is bad!"}

@@ -1,7 +1,6 @@
 -- Attempt class creation
-local MyClassDefinition, MyClass, public, private, protected = nil
 status, err = pcall(function()
-    MyClassDefinition, public, private, protected = upperclass:define("MyClass")
+    MyClassDefinition = upperclass:define("MyClass")
     
     function protected:protectedFunction()
         return "SUCCESS"

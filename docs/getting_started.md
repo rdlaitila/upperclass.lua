@@ -39,7 +39,7 @@ function public:getIsClassConstructed()
     return self.isClassConstructed
 end
 
-return upperclass:compile(myclass, {ALLOW_STATIC=true, ALLOW_INSTANCE=true, STRICT_TYPES=true})
+return upperclass:compile(myclass)
 ```
 
 Then in your project main.lua, add the following:

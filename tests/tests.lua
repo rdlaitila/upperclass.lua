@@ -1,15 +1,5 @@
 upperclass = require('..upperclass')
 
-MyBaseClass = require('tests.MyBaseClass')
-
-MyBaseClassInstance = MyBaseClass("ARG1", "ARG2")
-
-print(MyBaseClassInstance.testing)
-
-MyBaseClassInstance.testing = "edit"
-
-os.exit(0)
-
 local tests = {
     test_upperclass_define_method                   = require('tests.test_upperclass_define_method'),
     test_upperclass_compile_method                  = require('tests.test_upperclass_compile_method'),

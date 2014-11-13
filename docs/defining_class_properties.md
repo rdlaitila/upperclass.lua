@@ -39,7 +39,7 @@ In many cases you need a class property to be accessible by different scopes dep
 * Getting
 * Setting
 
-In upperclass you can define the access scope for both getting the property and setting the property. This effectivly allows you to create property types such as 'constant', 'public readonly' etc:
+In upperclass you can define the access scope for both getting the property and setting the property. This effectivly allows you to create property access types such as 'constant', 'public readonly' etc:
 
 ```lua
 --
