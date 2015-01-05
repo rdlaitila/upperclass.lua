@@ -44,7 +44,9 @@ In addition, in many cases you may wish to explicitly define the **type** of the
 
 ```lua
 --
--- Property in which public can read, but only the class can modify, and can only accept a value type of string, and has a default value of "myValue"
+-- Property in which public can read, but only the class can modify, 
+-- and can only accept a value type of string, and has a default 
+-- value of "myValue"
 --
 property : myCustomScopedProperty { 
     "myValue"; 
@@ -59,10 +61,10 @@ Notes:
 * The **property** keyword determines that we are defining a class property
 * The name after the first **:** colon character determines the **name** of the property.
 * The curly brackets after the property name contain the property definition, which contain values:
-** **Default Value:** [LUA_STRING|LUA_NUMBER|LUA_TABLE|LUA_BOOLEAN|LUA_USERDATA](optional)
-** **Getter Scope :** get='[public|private|protected|nobody]'(optional)
-** **Setter SCope :** set='[public|private|protected|nobody]'(optional)
-** **Explicit Type:** type='[string|boolean|number|table|userdata|any]'(optional)
+* **Default Value:** [LUA_STRING|LUA_NUMBER|LUA_TABLE|LUA_BOOLEAN|LUA_USERDATA](optional)
+* **Getter Scope :** get='[public|private|protected|nobody]'(optional)
+* **Setter SCope :** set='[public|private|protected|nobody]'(optional)
+* **Explicit Type:** type='[string|boolean|number|table|userdata|any]'(optional)
 * If you provide a **default value** to the property definition but no **type** value, the property will be strictly typed to the lua type of the default value.
 * If you provide no **default value** to the property definition but a explicit **type** the property will be strictly typed to the type value supplied and have a default value of nil.
 * If you provide no **default value** and no **type** to the property definition, the property will be strictly typed to **any** value type and have a default value of nil.
