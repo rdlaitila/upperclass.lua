@@ -26,11 +26,12 @@ private.myPrivateProperty = true
 protected.myProtectedProperty = 200
 ```
 
-The schema for this definition is:
+Notes:
 
-* [SCOPE].[PROPERTY_NAME] = [INITIAL_VALUE]
-
-Depending on the scope you provide before the '.' dot, will govern how the property may be accesed.
+* The **public**, **private**, **protected** declaration determines the **scope** of the property. 
+* The name after the first '.' dot determines the **name** of the  property.
+* The value supplied after the **=** equal sign determines the **default value** and the **type** of the property. The **type** is infered from the type of lua value supplied ex: **string**, **number**, **table**, **boolean**, **userdata**
+* If the **default value** supplied is of lua type **nil** then the value type is of **any** meaning the property can accept any value type after class compilation
 
 # Advanced property definition
 

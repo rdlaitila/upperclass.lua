@@ -1,7 +1,9 @@
 lua-upperclass
 ==============
 
-Yet Another Lua Class Implimentation
+Yet Another Lua Class Implimentation.
+
+Current Version: 0.1.0  (Major.Minor.Patch)
 
 # Documentation
 
