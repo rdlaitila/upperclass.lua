@@ -69,3 +69,43 @@ Notes:
 * If you provide no **default value** to the property definition but a explicit **type** the property will be strictly typed to the type value supplied and have a default value of nil.
 * If you provide no **default value** and no **type** to the property definition, the property will be strictly typed to **any** value type and have a default value of nil.
 
+Examples:
+
+```lua
+--
+-- Property that is publically accessible, but cannot be modified
+-- by any class member. This property is explicitly type 'number'
+--
+property : myConstantNumberProperty {
+    20;
+    get='public';
+    set='nobody';
+    type='number'
+}
+```
+
+```lua
+--
+-- Property that is only accessible to the class that defines it
+-- and is of type 'any' which can hold any lua value. Default value
+-- is a string
+--
+property : myPrivateClassProperty {
+    "PrivateVar";
+    get='private';
+    set='private';
+    type='any'
+}
+```
+
+```lua
+--
+-- Property that is public to all code and can hold any lua value.
+-- property does not define a default value thus its default value 
+-- is 'nil'
+--
+property : myPublicClassProperty {
+    get='public';
+    set='public';
+}
+```
