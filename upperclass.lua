@@ -575,7 +575,7 @@ function upperclass:compile(CLASS)
         -- Call class constructor
         local passargs = {}
         if #arguments > 1 then for a=2, #arguments do table.insert(passargs, arguments[a]) end end
-        local __construct = imp.members["__construct"].value
+        local __construct = imp.members["__construct"].value_default
         __construct(instance, unpack(passargs))
         
         -- Construct parent
