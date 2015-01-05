@@ -7,14 +7,14 @@ Upperclass supports the following metamethods:
 
 **WARNING:** utilizing metamethods is a highly advanced Lua topic. Improperly utilizing metamethods can cause race conditions, program locks, and other instabilities if you do not understand what is happending behind the scenes. If you require any clarifications please open a GitHub Issue for additional documentation.
 
-# __index
+## __index
 
 Upperclass fully supports a user defined __index method within class definitions. This method accepts two parameters **KEY** and **MEMBER**:
 
 * KEY: The member **name** that was accessed
 * MEMBER: A table containing the related Upperclass Class Member Property data (if it exists)
 
-``lua
+```lua
 local MyClass = upperclass:define("MyClass")
 
 function private:__index(KEY, MEMBER)
@@ -32,7 +32,7 @@ end
 MyClass = upperclass:compile(MyClass)
 ```
 
-# __newindex
+## __newindex
 
 Upperclass fully supports a user defined __newndex method within class definitions. This method accepts three parameters **KEY**, **VALUE** and **MEMBER**:
 
@@ -40,7 +40,7 @@ Upperclass fully supports a user defined __newndex method within class definitio
 * VALUE: The value that was attempting to be set
 * MEMBER: A table containing the related Upperclass Class Member Property data (if it exists)
 
-``lua
+```lua
 local MyClass = upperclass:define("MyClass")
 
 function private:__newindex(KEY, VALUE, MEMBER)
