@@ -29,7 +29,8 @@ end
 --
 function protected:myProtectedMethod()
     print("I'm only accessible from the class that defines me, or any class that inherits me!")
-end```
+end
+```
 
 # Overriding Class Methods at runtime
 
