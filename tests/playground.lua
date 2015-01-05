@@ -7,24 +7,15 @@ print(upperclass.version)
 --==================================================================
 local BaseClass = upperclass:define("BaseClass")
 
-public.baseClassProperty = "testing"
+private.baseClassProperty = "testing"
 
-function private:__newindex(KEY, VALUE, MEMBER)
-    print(tostring(KEY), tostring(VALUE), tostring(MEMBER))
+function public:setValue()
+    print(self.baseClassProperty)
+    self.baseClassProperty = "edited"
+    print(self.baseClassProperty)
 end
 
 BaseClass = upperclass:compile(BaseClass)
 --==================================================================
-local SubClass = upperclass:define("SubClass", BaseClass)
-
-property : subClassProperty {
-    {};
-    get='public';
-    set='public';
-    type='table';
-}
-
-SubClass = upperclass:compile(SubClass)
---==================================================================
-upperclass:dumpClassMembers(SubClass, 1)
-SubClass.baseClassProperty = "whatever"
+upperclass:dumpClassMembers(BaseClass, 1)
+BaseClass:setValue()

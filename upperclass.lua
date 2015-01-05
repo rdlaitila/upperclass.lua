@@ -203,17 +203,25 @@ end
 --
 -- Returns all class members, searching through all parents
 --
-function upperclass:getClassMembers(CLASS)
+function upperclass:getClassMembers(CLASS, RECURSE)
     local targetClass = CLASS
     local members = {}
+    
+    if RECURSE == nil then
+        RECURSE = false
+    end
     
     while targetClass ~= nil do
         for key, value in pairs(targetClass.__imp__.members) do
             table.insert(members, targetClass.__imp__.members[key])
         end
         
-        if targetClass.__parent__ ~= nil then
-            targetClass = targetClass.__parent__
+        if RECURSE == true then
+            if targetClass.__parent__ ~= nil then
+                targetClass = targetClass.__parent__
+            else
+                targetClass = nil
+            end
         else
             targetClass = nil
         end
@@ -650,28 +658,27 @@ function upperclass:compile(CLASS)
                 return TABLE.__inst__.memberValueOverrides[KEY] or targetMember.value_default                
             end
         elseif targetMember.member_scope_get == UPPERCLASS_SCOPE_PRIVATE then
-            for key, value in pairs(TABLE.__imp__.members) do
-                if targetMember == TABLE.__imp__.members[key] then
-                    if caller == TABLE.__imp__.members[key].value_default then
-                        if indexMetamethodMember ~= nil then
-                            return indexMetamethodMember.value_default(TABLE, tostring(KEY), {
-                                member_scope_get = targetMember.member_scope_get,
-                                member_scope_set = targetMember.member_scope_set,
-                                member_type = targetMember.member_type,
-                                value_type = targetMember.value_type,
-                                value_default = targetMember.value_default,
-                                value_current = TABLE.__inst__.memberValueOverrides[KEY]
-                            })
-                        elseif indexMetamethodMember == nil then
-                            return TABLE.__inst__.memberValueOverrides[KEY] or targetMember.value_default
-                        end
+            local members = upperclass:getClassMembers(TABLE, false)
+            for a=1, #members do                
+                if caller == members[a].value_default then                    
+                    if indexMetamethodMember ~= nil then
+                        return indexMetamethodMember.value_default(TABLE, tostring(KEY), {
+                            member_scope_get = targetMember.member_scope_get,
+                            member_scope_set = targetMember.member_scope_set,
+                            member_type = targetMember.member_type,
+                            value_type = targetMember.value_type,
+                            value_default = targetMember.value_default,
+                            value_current = TABLE.__inst__.memberValueOverrides[KEY]
+                        })
+                    elseif indexMetamethodMember == nil then
+                        return TABLE.__inst__.memberValueOverrides[KEY] or targetMember.value_default
                     end
                 end
             end
             
             error("Attempt to retrieve inheritied private member '"..tostring(KEY).."' from class '"..TABLE.__imp__.name.."' is disallowed")
         elseif targetMember.member_scope_get == UPPERCLASS_SCOPE_PROTECTED then
-            local members = upperclass:getClassMembers(TABLE)
+            local members = upperclass:getClassMembers(TABLE, true)
             for a=1, #members do                
                 if caller == members[a].value_default then                    
                     if indexMetamethodMember ~= nil then
@@ -765,25 +772,24 @@ function upperclass:compile(CLASS)
                 end
             end
         elseif targetMember.member_scope_get == UPPERCLASS_SCOPE_PRIVATE then
-            for key, value in pairs(TABLE.__imp__.members) do
-                if targetMember == TABLE.__imp__.members[key] then
-                    if caller == TABLE.__imp__.members[key].value_default then
-                        if newindexMetamethodMember ~= nil then
-                            return newindexMetamethodMember.value_default(TABLE, tostring(KEY), VALUE, {
-                                member_scope_get = targetMember.member_scope_get,
-                                member_scope_set = targetMember.member_scope_set,
-                                member_type = targetMember.member_type,
-                                value_type = targetMember.value_type,
-                                value_default = targetMember.value_default,
-                                value_current = TABLE.__inst__.memberValueOverrides[KEY]
-                            })
-                        elseif newindexMetamethodMember == nil then
-                            if targetMember.member_type == UPPERCLASS_MEMBER_TYPE_PROPERTY then
-                                TABLE.__inst__.memberValueOverrides[KEY] = VALUE
-                                return
-                            else
-                                error("Attempt to set class member method '"..tostring(KEY).."' in class '"..TABLE.__imp__.name.."' during runtime is disallowed")
-                            end
+            local members = upperclass:getClassMembers(TABLE, false)
+            for a=1, #members do                
+                if caller == members[a].value_default then                    
+                    if newindexMetamethodMember ~= nil then
+                        return newindexMetamethodMember.value_default(TABLE, tostring(KEY), VALUE, {
+                            member_scope_get = targetMember.member_scope_get,
+                            member_scope_set = targetMember.member_scope_set,
+                            member_type = targetMember.member_type,
+                            value_type = targetMember.value_type,
+                            value_default = targetMembealue_default,
+                            value_current = TABLE.__inst__.memberValueOverrides[KEY]
+                        })
+                    elseif newindexMetamethodMember == nil then
+                        if targetMember.member_type == UPPERCLASS_MEMBER_TYPE_PROPERTY then
+                            TABLE.__inst__.memberValueOverrides[KEY] = VALUE
+                            return
+                        else
+                            error("Attempt to set class member method '"..tostring(KEY).."' in class '"..TABLE.__imp__.name.."' during runtime is disallowed")
                         end
                     end
                 end
@@ -791,7 +797,7 @@ function upperclass:compile(CLASS)
             
             error("Attempt to set inheritied private member '"..tostring(KEY).."' from class '"..TABLE.__imp__.name.."' is disallowed")
         elseif targetMember.member_scope_get == UPPERCLASS_SCOPE_PROTECTED then
-            local members = upperclass:getClassMembers(TABLE)
+            local members = upperclass:getClassMembers(TABLE, true)
             for a=1, #members do                
                 if caller == members[a].value_default then                    
                     if newindexMetamethodMember ~= nil then
