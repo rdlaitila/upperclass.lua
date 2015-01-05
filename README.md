@@ -9,3 +9,5 @@ Yet Another Lua Class Implimentation
 * [Dependencies](https://github.com/admin36/lua-upperclass/blob/master/docs/dependencies.md)
 * [Getting Started](https://github.com/admin36/lua-upperclass/blob/master/docs/getting_started.md)
 * [Defining Class Properties](https://github.com/admin36/lua-upperclass/blob/master/docs/defining_class_properties.md)
+* [Defining Class Methods](https://github.com/admin36/lua-upperclass/blob/master/docs/defining_class_methods.md)
+* [All Documentation](https://github.com/admin36/lua-upperclass/blob/master/docs/)
