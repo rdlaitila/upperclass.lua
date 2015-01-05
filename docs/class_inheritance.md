@@ -21,15 +21,9 @@ Then define your child class:
 ```lua
 local ChildClass = upperclass:define("ChildClass", BaseClass)
 
--- Class code...
+-- Class Code...
 
 ChildClass = upperclass:compile(ChildClass)
 ```
 
-Your 'ChildClass' now has access to all the properties and methods of the 'BaseClass' where the scope is appropriate. 
-
-
-
-
-
-
+Your 'ChildClass' now has access to all the properties and methods of the 'BaseClass' where the scope is appropriate.
