@@ -3,19 +3,25 @@ This file is just for quick testing of things and is not apart of the main test 
 ]]
 
 local upperclass = require('..upperclass')
-print(upperclass.version)
---==================================================================
-local BaseClass = upperclass:define("BaseClass")
 
-private.baseClassProperty = "testing"
+local Class = upperclass:define("Class")
 
-function public:setValue()
-    print(self.baseClassProperty)
-    self.baseClassProperty = "edited"
-    print(self.baseClassProperty)
+property : numberProperty {
+    0;
+    get='public';
+    set='private';       
+}
+
+function private:__construct(NUM)
+    self.numberProperty = NUM
 end
 
-BaseClass = upperclass:compile(BaseClass)
---==================================================================
-upperclass:dumpClassMembers(BaseClass, 1)
-BaseClass:setValue()
+Class = upperclass:compile(Class)
+
+local myClass = Class(5)
+
+print(Class.numberProperty)
+print(myClass.numberProperty)
+
+upperclass:dumpClassMembers(Class, 1)
+upperclass:dumpClassMembers(myClass, 1)

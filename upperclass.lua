@@ -543,7 +543,7 @@ function upperclass:compile(CLASS)
     -- Classdef Metamethod __call
     -- This metamethod 
     --
-    function classmt.__call(...)        
+    function classmt.__call(...)          
         -- Pack args
         local arguments = {...}
         
@@ -704,7 +704,7 @@ function upperclass:compile(CLASS)
     -- Classdef Metamethod __newindex
     --
     function classmt.__newindex(TABLE, KEY, VALUE)
-        --print("Entering Class Internal __index Method. Table: '"..tostring(TABLE).."' KEY: '"..tostring(KEY).."'")
+        --print("Entering Class Internal __newindex Method. Table: '"..tostring(TABLE).."' KEY: '"..tostring(KEY).."'", "VALUE: "..tostring(VALUE))
         
         -- Ensure we return some important keys.
         if KEY == "__imp__" or KEY == "__inst__" or KEY == "__parent__" then
@@ -753,7 +753,7 @@ function upperclass:compile(CLASS)
         end
         
         -- If debug library is present, return members based on scope
-        if targetMember.member_scope_get == UPPERCLASS_SCOPE_PUBLIC then
+        if targetMember.member_scope_set == UPPERCLASS_SCOPE_PUBLIC then
             if newindexMetamethodMember ~= nil then
                 return newindexMetamethodMember.value_default(TABLE, tostring(KEY), VALUE, {
                     member_scope_get = targetMember.member_scope_get,
@@ -771,10 +771,10 @@ function upperclass:compile(CLASS)
                     error("Attempt to set class member method '"..tostring(KEY).."' in class '"..TABLE.__imp__.name.."' during runtime is disallowed")
                 end
             end
-        elseif targetMember.member_scope_get == UPPERCLASS_SCOPE_PRIVATE then
+        elseif targetMember.member_scope_set == UPPERCLASS_SCOPE_PRIVATE then                 
             local members = upperclass:getClassMembers(TABLE, false)
             for a=1, #members do                
-                if caller == members[a].value_default then                    
+                if caller == members[a].value_default then                                        
                     if newindexMetamethodMember ~= nil then
                         return newindexMetamethodMember.value_default(TABLE, tostring(KEY), VALUE, {
                             member_scope_get = targetMember.member_scope_get,
@@ -784,9 +784,9 @@ function upperclass:compile(CLASS)
                             value_default = targetMembealue_default,
                             value_current = TABLE.__inst__.memberValueOverrides[KEY]
                         })
-                    elseif newindexMetamethodMember == nil then
-                        if targetMember.member_type == UPPERCLASS_MEMBER_TYPE_PROPERTY then
-                            TABLE.__inst__.memberValueOverrides[KEY] = VALUE
+                    elseif newindexMetamethodMember == nil then                        
+                        if targetMember.member_type == UPPERCLASS_MEMBER_TYPE_PROPERTY then                            
+                            TABLE.__inst__.memberValueOverrides[KEY] = VALUE                                           
                             return
                         else
                             error("Attempt to set class member method '"..tostring(KEY).."' in class '"..TABLE.__imp__.name.."' during runtime is disallowed")
@@ -796,7 +796,7 @@ function upperclass:compile(CLASS)
             end
             
             error("Attempt to set inheritied private member '"..tostring(KEY).."' from class '"..TABLE.__imp__.name.."' is disallowed")
-        elseif targetMember.member_scope_get == UPPERCLASS_SCOPE_PROTECTED then
+        elseif targetMember.member_scope_set == UPPERCLASS_SCOPE_PROTECTED then
             local members = upperclass:getClassMembers(TABLE, true)
             for a=1, #members do                
                 if caller == members[a].value_default then                    
