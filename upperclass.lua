@@ -51,7 +51,26 @@ local UPPERCLASS_TYPE_FUNCTION = {}
 local UPPERCLASS_TYPE_NUMBER = {}
 local UPPERCLASS_TYPE_USERDATA = {}
 local UPPERCLASS_TYPE_NIL = {}
-local UPPERCLASS_TYPE_boolean = {}
+local UPPERCLASS_TYPE_BOOLEAN = {}
+
+--
+-- Set references to our constants in upperclass table
+-- users can use these to compare against member types
+--
+upperclass.UPPERCLASS_SCOPE_PRIVATE     = UPPERCLASS_SCOPE_PRIVATE
+upperclass.UPPERCLASS_SCOPE_PROTECTED   = UPPERCLASS_SCOPE_PROTECTED
+upperclass.UPPERCLASS_SCOPE_PUBLIC      = UPPERCLASS_SCOPE_PUBLIC
+upperclass.UPPERCLASS_SCOPE_NOBODY      = UPPERCLASS_SCOPE_NOBODY
+upperclass.UPPERCLASS_MEMBER_TYPE_PROPERTY = UPPERCLASS_MEMBER_TYPE_PROPERTY
+upperclass.UPPERCLASS_MEMBER_TYPE_FUNCTION = UPPERCLASS_MEMBER_TYPE_FUNCTION
+upperclass.UPPERCLASS_TYPE_ANY          = UPPERCLASS_TYPE_ANY
+upperclass.UPPERCLASS_TYPE_STRING       = UPPERCLASS_TYPE_STRING
+upperclass.UPPERCLASS_TYPE_TABLE        = UPPERCLASS_TYPE_TABLE
+upperclass.UPPERCLASS_TYPE_FUNCTION     = UPPERCLASS_TYPE_FUNCTION
+upperclass.UPPERCLASS_TYPE_NUMBER       = UPPERCLASS_TYPE_NUMBER
+upperclass.UPPERCLASS_TYPE_USERDATA     = UPPERCLASS_TYPE_USERDATA
+upperclass.UPPERCLASS_TYPE_NIL          = UPPERCLASS_TYPE_NIL
+upperclass.UPPERCLASS_TYPE_BOOLEAN      = UPPERCLASS_TYPE_BOOLEAN
 
 --
 -- Dumps class members
@@ -186,10 +205,12 @@ end
 --
 function upperclass:getClassMember(CLASS, KEY)
     local targetClass = CLASS
+    local targetMember = nil
     
     while targetMember == nil do            
         if targetClass.__imp__.members[KEY] ~= nil then
-            return targetClass.__imp__.members[KEY]            
+            targetMember = targetClass.__imp__.members[KEY]            
+            break
         elseif targetClass.__parent__ ~= nil then
             targetClass = targetClass.__parent__
         elseif targetClass.__parent__ == nil then
@@ -197,7 +218,7 @@ function upperclass:getClassMember(CLASS, KEY)
         end            
     end
     
-    return nil
+    return targetMember
 end
 
 --
@@ -254,12 +275,12 @@ function upperclass:define(CLASS_NAME, PARENT)
     if debug ~= nil then
         classdef.__imp__.file = debug.getinfo(2, "S").source:sub(2)
     else
-        classdef.__imp__.file = il
+        classdef.__imp__.file = nil
     end
     
     -- Create table to hold our class memebers. table KEY is member name
-    classdef.__imp__.members = {}
-  
+    classdef.__imp__.members = {}    
+    
     -- Create tables to hold instance values
     classdef.__inst__ = {        
         isClassInstance = false,
