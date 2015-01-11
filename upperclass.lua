@@ -267,7 +267,7 @@ function upperclass:getClassMemberValue(CLASS, KEY, TARGET_MEMBER)
     end
     
     -- Otherwise locate the member and return its value default
-    targetMember = nil
+    local targetMember = nil
     if TARGET_MEMBER == nil then
         targetMember = upperclass:getClassMember(CLASS, KEY)
     else
