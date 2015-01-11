@@ -61,9 +61,9 @@ Notes:
 * The **property** keyword determines that we are defining a class property
 * The name after the first **:** colon character determines the **name** of the property.
 * The curly brackets after the property name contain the property definition, which contain values:
-* **Default Value:** [LUA_STRING|LUA_NUMBER|LUA_TABLE|LUA_BOOLEAN|LUA_USERDATA](optional)
+* **Default Value:** [lua_string|lua_number|lua_boolean|lua_table|lua_userdata|lua_nil|](optional)
 * **Getter Scope :** get='[public|private|protected|nobody]'(optional)
-* **Setter SCope :** set='[public|private|protected|nobody]'(optional)
+* **Setter Scope :** set='[public|private|protected|nobody]'(optional)
 * **Explicit Type:** type='[string|boolean|number|table|userdata|any]'(optional)
 * If you provide a **default value** to the property definition but no **type** value, the property will be strictly typed to the lua type of the default value.
 * If you provide no **default value** to the property definition but a explicit **type** the property will be strictly typed to the type value supplied and have a default value of nil.
