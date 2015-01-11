@@ -2,26 +2,44 @@
 This file is just for quick testing of things and is not apart of the main test suite
 ]]
 
-local upperclass = require('..upperclass')
-
-local Class = upperclass:define("Class")
-
-property : numberProperty {
-    0;
-    get='public';
-    set='private';       
-}
-
-function private:__construct(NUM)
-    self.numberProperty = NUM
+if debug == nil then
+    print("NO DEBUG LIBRARY")
 end
 
-Class = upperclass:compile(Class)
+local upperclass = require('..upperclass')
 
-local myClass = Class(5)
+upperclass.DEBUG_ENABLED = true
 
-print(Class.numberProperty)
-print(myClass.numberProperty)
+--====================================================
 
-upperclass:dumpClassMembers(Class, 1)
-upperclass:dumpClassMembers(myClass, 1)
+local Class1 = upperclass:define("Class1")
+
+property : myPrivateVar {
+    "testing";
+    get='protected';
+    set='private';
+}
+
+Class1 = upperclass:compile(Class1)
+
+--====================================================
+
+local Class2 = upperclass:define("Class2", Class1)
+
+function private:__index(KEY) 
+    if KEY == 'blah' then
+        return "GO FUCK YOURSELF"
+    end
+    
+    -- Continue Default Lookup Behavior
+    return UPPERCLASS_DEFAULT_LOOKUP_BEHAVIOR
+end
+
+function public:getPrivateVar()
+    return self.myPrivateVar
+end
+
+Class2 = upperclass:compile(Class2)
+
+--====================================================
+print(Class2.blah)

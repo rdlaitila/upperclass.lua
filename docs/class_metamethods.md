@@ -9,28 +9,30 @@ Upperclass supports the following metamethods:
 
 ## __index
 
-Upperclass fully supports a user defined __index method within class definitions. This method accepts two parameters **KEY** and **MEMBER**:
+Upperclass fully supports a user defined __index method within class definitions. This method accepts one parameter **KEY**:
 
 * KEY: The member **name** that was accessed
-* MEMBER: A table containing the related Upperclass Class Member Property data (if it exists)
 
 ```lua
 local MyClass = upperclass:define("MyClass")
 
-function private:__index(KEY, MEMBER)
-    -- Print what KEY was accessed, and the member lookup table
-    print(tostring(KEY), tostring(MEMBER))
-    
-    -- Do some custom lookup processing
-    
-    -- Default to returning the member value
-    if MEMBER ~= nil then
-        return self.__imp__.memberValueOverrides[KEY] or MEMBER.value_default
+function private:__index(KEY)
+    if KEY == 'some_custom_value' then
+        -- DO SOME CUSTOM PROCESSING IF YOU WANT
     end
+    
+    -- Continue Default Lookup Behavior otherwise
+    return UPPERCLASS_DEFAULT_LOOKUP_BEHAVIOR
 end
 
 MyClass = upperclass:compile(MyClass)
 ```
+
+When utilizing the __index metamethod of your class, you are permitted to use the **self** reference to your class to retrieve class members.
+
+When utilizing the __index metamethod of your class, the resulting lookup will respect the scope when looking up members of a parent class. For instance, if the __index lookup of a member is of scope **private** in the parent class, upperclass will throw its default error for accessing a parent private member.
+
+**BE VERY CAREFUL USING __index METAMETHODS AS THEY CAN BREAK STRICT CLASS SYMANTICS IF YOU ARE NOT CAREFUL**
 
 ## __newindex
 
