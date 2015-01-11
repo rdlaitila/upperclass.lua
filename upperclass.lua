@@ -25,7 +25,7 @@ SOFTWARE.
 local upperclass = {}
 
 -- Our version: Major.Minor.Patch
-upperclass.version = "0.1.0"
+upperclass.version = "0.1.1"
 
 --
 -- Define some static scope properties for use internally
