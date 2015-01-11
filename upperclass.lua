@@ -250,7 +250,7 @@ end
 --
 -- Upperclass Define function.
 --
-function upperclass:define(CLASS_NAME, PARENT)
+function upperclass:define(CLASS_NAME, PARENT)    
     local classdef = {}    
     
     -- Gracefully take over globals: public, private, protected, property
@@ -334,7 +334,7 @@ function upperclass:compile(CLASS)
         member_scope_set = UPPERCLASS_SCOPE_NOBODY,
         member_type = UPPERCLASS_MEMBER_TYPE_FUNCTION,
         value_type = UPPERCLASS_TYPE_FUNCTION,
-        value_default = function(...)
+        value_default = function(self, ...)            
             local constructArgs = {...}
             if self.__parent__.__inst__.isClassInstance == false then
                 self.__parent__ = self.__parent__(unpack(constructArgs))
@@ -569,15 +569,12 @@ function ClassRuntimeMetatable.__call(...)
         
     -- Get table argument, a.k.a 'self'
     local self = arguments[1]
-        
-    -- Get class implimentation
-    local imp = rawget(self, "__imp__")
             
     -- Get caller function
     local caller = debug.getinfo(2).func
             
     -- Check to ensure that we are not calling from within the class itself
-    for _, member in pairs(imp.members) do
+    for _, member in pairs(self.__imp__.members) do
         if member.value == caller then
             error("Attempt to call class instantiation from within class '"..imp.name.."' is disallowed")
         end
@@ -587,7 +584,7 @@ function ClassRuntimeMetatable.__call(...)
     local instance = {}
             
     -- Setup reference to class implimentation
-    instance.__imp__ = imp
+    instance.__imp__ = self.__imp__
             
     -- Setup table to hold instance implimentation
     instance.__inst__ = {
@@ -599,12 +596,12 @@ function ClassRuntimeMetatable.__call(...)
     -- Set parent reference
     instance.__parent__ = self.__parent__
         
-    setmetatable(instance, getmetatable(self))
+    setmetatable(instance, ClassRuntimeMetatable)
             
     -- Call class constructor
     local passargs = {}
     if #arguments > 1 then for a=2, #arguments do table.insert(passargs, arguments[a]) end end
-    local __construct = imp.members["__construct"].value_default
+    local __construct = self.__imp__.members["__construct"].value_default
     __construct(instance, unpack(passargs))
      
     -- Construct parent
