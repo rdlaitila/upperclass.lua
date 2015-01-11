@@ -27,9 +27,6 @@ local upperclass = {}
 -- Our version: Major.Minor.Patch
 upperclass.version = "0.1.0"
 
--- if upperclass debug is enabled
-upperclass.DEBUG_ENABLED = false
-
 --
 -- Define some static scope properties for use internally
 --
@@ -47,19 +44,19 @@ UPPERCLASS_MEMBER_TYPE_FUNCTION = {}
 -- 
 -- Define some types
 --
-UPPERCLASS_TYPE_ANY = {}
-UPPERCLASS_TYPE_STRING = {}
-UPPERCLASS_TYPE_TABLE = {}
-UPPERCLASS_TYPE_FUNCTION = {}
-UPPERCLASS_TYPE_NUMBER = {}
-UPPERCLASS_TYPE_USERDATA = {}
-UPPERCLASS_TYPE_NIL = {}
-UPPERCLASS_TYPE_BOOLEAN = {}
+UPPERCLASS_TYPE_ANY         = {string='any'}
+UPPERCLASS_TYPE_STRING      = {string='string'}
+UPPERCLASS_TYPE_TABLE       = {string='table'}
+UPPERCLASS_TYPE_FUNCTION    = {string='function'}
+UPPERCLASS_TYPE_NUMBER      = {string='number'}
+UPPERCLASS_TYPE_USERDATA    = {string='userdata'}
+UPPERCLASS_TYPE_NIL         = {string='nil'}
+UPPERCLASS_TYPE_BOOLEAN     = {string='boolean'}
 
 --
 -- Global to indicate during metamethod calls that we wish to continue with default lookup behaviors
 --
-UPPERCLASS_DEFAULT_LOOKUP_BEHAVIOR = {}
+UPPERCLASS_DEFAULT_BEHAVIOR = {}
 
 --
 -- Holds the metatable used during the class definition stage
@@ -203,14 +200,6 @@ end
 -- Returns the specified class member, searching through all parents
 --
 function upperclass:getClassMember(CLASS, KEY)
-    if upperclass.DEBUG_ENABLED then
-        print(
-            "Upperclass:getClassMember Called", 
-            "CLASS: "..tostring(CLASS.__imp__.name),
-            "KEY: "..tostring(KEY)
-        )
-    end
-    
     local targetClass = CLASS
     local targetMember = nil
     
@@ -232,14 +221,6 @@ end
 -- Returns all class members, searching through all parents
 --
 function upperclass:getClassMembers(CLASS, RECURSE)
-    if upperclass.DEBUG_ENABLED then
-        print(
-            "Upperclass:getClassMembers Called", 
-            "CLASS: "..tostring(CLASS.__imp__.name),
-            "RECURSE: "..tostring(RECURSE)
-        )
-    end
-    
     local targetClass = CLASS
     local members = {}
     
@@ -637,15 +618,7 @@ end
 --
 -- ClassRuntimeMetatable __index method
 --
-function ClassRuntimeMetatable.__index(TABLE, KEY)
-    if upperclass.DEBUG_ENABLED then
-        print(
-            "ClassRuntimeMetatable.__index Called", 
-            "CLASS: "..tostring(TABLE.__imp__.name),
-            "KEY: "..tostring(KEY)
-        )
-    end
-    
+function ClassRuntimeMetatable.__index(TABLE, KEY)    
     -- Ensure we return some important keys.
     if KEY == "__imp__" or KEY == "__inst__" or KEY == "__parent__" then
         return rawget(TABLE, KEY)
@@ -664,7 +637,7 @@ function ClassRuntimeMetatable.__index(TABLE, KEY)
             -- Reenable permitMetamethodCalls
             TABLE.__inst__.permitMetamethodCalls = true            
             
-            if indexMetamethodMemberRetVal ~= UPPERCLASS_DEFAULT_LOOKUP_BEHAVIOR then
+            if indexMetamethodMemberRetVal ~= UPPERCLASS_DEFAULT_BEHAVIOR then
                 return indexMetamethodMemberRetVal
             end
         end
@@ -694,11 +667,11 @@ function ClassRuntimeMetatable.__index(TABLE, KEY)
     elseif targetMember.member_scope_get == UPPERCLASS_SCOPE_PRIVATE then
         local members = upperclass:getClassMembers(TABLE, false)
         for a=1, #members do                
-            if targetMember == members[a] then                
+            if caller == members[a].value_default then                
                 return TABLE.__inst__.memberValueOverrides[KEY] or targetMember.value_default
             end
         end        
-        error("Attempt to retrieve inheritied private member '"..tostring(KEY).."' from class '"..TABLE.__imp__.name.."' is disallowed")
+        error("Attempt to retrieve private member '"..tostring(KEY).."' from outside of class '"..TABLE.__imp__.name.."' is disallowed")
     elseif targetMember.member_scope_get == UPPERCLASS_SCOPE_PROTECTED then
         local members = upperclass:getClassMembers(TABLE, true)        
         for a=1, #members do                        
@@ -714,100 +687,96 @@ end
 -- ClassRuntimeMetatable __newindex method
 --
 function ClassRuntimeMetatable.__newindex(TABLE, KEY, VALUE)
-    --print("Entering Class Internal __newindex Method. Table: '"..tostring(TABLE).."' KEY: '"..tostring(KEY).."'", "VALUE: "..tostring(VALUE))
-        
     -- Ensure we return some important keys.
     if KEY == "__imp__" or KEY == "__inst__" or KEY == "__parent__" then
-        return rawget(TABLE, KEY)
+       error("Attempt to set internal class member '"..tostring(KEY).."' is disallowed")
     end
         
+    -- Attempt to locate a user defined __newindex member and call it
+    if TABLE.__inst__.permitMetamethodCalls == true then
+        local newindexMetamethodMember = upperclass:getClassMember(TABLE, '__newindex')                
+        if newindexMetamethodMember ~= nil then
+            -- We must set permitMetamethodCalls to false to stop recursive behavior
+            TABLE.__inst__.permitMetamethodCalls = false            
+            
+            -- Call the __index user defined member
+            local newindexMetamethodMemberRetVal = newindexMetamethodMember.value_default(TABLE, KEY, VALUE)            
+            
+            -- Reenable permitMetamethodCalls
+            TABLE.__inst__.permitMetamethodCalls = true            
+            
+            if newindexMetamethodMemberRetVal ~= UPPERCLASS_DEFAULT_BEHAVIOR then
+                return newindexMetamethodMemberRetVal
+            end
+        end
+    end
+    
     -- Get caller function for use in private and protected lookups only if the debug library is present        
     local caller = nil
     if debug ~= nil then
         caller = debug.getinfo(2, 'f').func            
     end
-        
+    
     -- Attempt to locate a target member
-    local targetMember = upperclass:getClassMember(TABLE, KEY)        
-    local newindexMetamethodMember = upperclass:getClassMember(TABLE, '__newindex')
-        
-    -- IF targetMember is nil AND we have a class __index method, call the __index method with nil member_lookup
-    -- ELSE return member lookup failure        
-    if targetMember == nil and newindexMetamethodMember ~= nil then            
-        newindexMetamethodMember.value_default(TABLE, tostring(KEY), VALUE, targetMember)
-    elseif targetMember == nil and indexMetamethodMember == nil then
-        error("Attempt to set non-existant class member '"..tostring(KEY).."' in class '"..tostring(TABLE.__imp__.name).."' is disallowed")
+    local targetMember = upperclass:getClassMember(TABLE, KEY) 
+    
+    -- Halt if our target member is nil
+    if targetMember == nil then
+        error("Attempt to obtain non-existant class member '"..tostring(KEY).."' in class '"..tostring(TABLE.__imp__.name).."' is disallowed")
     end
-       
+    
+    -- Halt if our target member is a method
+    if targetMember.member_type == UPPSERCLASS_MEMBER_TYPE_FUNCTION then
+        error("Attempt to override member method '"..tostring(KEY).."' is disallowed")
+    end
+    
     --[[
         ANY LOGIC PAST THIS POINT ASSUMES A VALID MEMBER LOOKUP
     --]]
         
-    -- If debug library is missing, then all members are considered PUBLIC so we will just return the member value or call __index if present
-    if debug == nil and indexMetamethodMember ~= nil then
-        return newindexMetamethodMember.value_default(TABLE, tostring(KEY), VALUE, {
-            member_scope_get = targetMember.member_scope_get,
-            member_scope_set = targetMember.member_scope_set,
-            member_type = targetMember.member_type,
-            value_type = targetMember.value_type,
-            value_default = targetMember.value_default,
-            value_current = TABLE.__inst__.memberValueOverrides[KEY]
-        })
-    elseif debug == nil and newindexMetamethodMember == nil then
-        if targetMember.member_type == UPPERCLASS_MEMBER_TYPE_PROPERTY then
-            TABLE.__inst__.memberValueOverrides[KEY] = VALUE
-            return
-        else
-            error("Attempt to set class member method '"..tostring(KEY).."' in class '"..TABLE.__imp__.name.."' during runtime is disallowed")
-        end
-    end
-        
-    -- If debug library is present, return members based on scope
-    if targetMember.member_scope_set == UPPERCLASS_SCOPE_PUBLIC then
-        if newindexMetamethodMember ~= nil then
-            return newindexMetamethodMember.value_default(TABLE, KEY, VALUE)
-        elseif newindexMetamethodMember == nil then
-            if targetMember.member_type == UPPERCLASS_MEMBER_TYPE_PROPERTY then
-                TABLE.__inst__.memberValueOverrides[KEY] = VALUE
-                return
-            else
-                error("Attempt to set class member method '"..tostring(KEY).."' in class '"..TABLE.__imp__.name.."' during runtime is disallowed")
-            end
-        end
+    -- Holds a boolean determining if our scope is proper
+    local scopePermitted = false
+    
+    -- Holds a boolean determining if edit is allowed
+    local editPermitted = false
+    
+    -- Conduct scope check
+    if debug == nil or targetMember.member_scope_set == UPPERCLASS_SCOPE_PUBLIC then
+        scopePermitted = true        
     elseif targetMember.member_scope_set == UPPERCLASS_SCOPE_PRIVATE then                 
         local members = upperclass:getClassMembers(TABLE, false)
         for a=1, #members do                
             if caller == members[a].value_default then                                        
-                if newindexMetamethodMember ~= nil then
-                    return newindexMetamethodMember.value_default(TABLE, KEY, VALUE)
-                elseif newindexMetamethodMember == nil then                        
-                    if targetMember.member_type == UPPERCLASS_MEMBER_TYPE_PROPERTY then                            
-                        TABLE.__inst__.memberValueOverrides[KEY] = VALUE                                           
-                        return
-                    else
-                        error("Attempt to set class member method '"..tostring(KEY).."' in class '"..TABLE.__imp__.name.."' during runtime is disallowed")
-                    end
-                end
+                scopePermitted = true
             end
-        end            
-        error("Attempt to set inheritied private member '"..tostring(KEY).."' from class '"..TABLE.__imp__.name.."' is disallowed")
+        end
+        if scopePermitted ~= true then
+            error("Attempt to set private member '"..tostring(KEY).."' from outside class '"..TABLE.__imp__.name.."' is disallowed")
+        end
     elseif targetMember.member_scope_set == UPPERCLASS_SCOPE_PROTECTED then
         local members = upperclass:getClassMembers(TABLE, true)
         for a=1, #members do                
             if caller == members[a].value_default then                    
-                if newindexMetamethodMember ~= nil then
-                    return newindexMetamethodMember.value_default(TABLE, KEY, VALUE)
-                elseif newindexMetamethodMember == nil then
-                    if targetMember.member_type == UPPERCLASS_MEMBER_TYPE_PROPERTY then
-                        TABLE.__inst__.memberValueOverrides[KEY] = VALUE
-                        return
-                    else
-                        error("Attempt to set class member method '"..tostring(KEY).."' in class '"..TABLE.__imp__.name.."' during runtime is disallowed")
-                    end
-                end
+                scopePermitted = true
             end
         end         
-        error("Attempt to set protected member '"..tostring(KEY).."' from outside of class '"..TABLE.__imp__.name.."' is disallowed")
+        if scopePermitted ~= true then
+            error("Attempt to set protected member '"..tostring(KEY).."' from outside of class '"..TABLE.__imp__.name.."' is disallowed")
+        end
+    end
+    
+    -- Conduct edit allowed check
+    if targetMember.value_type == UPPERCLASS_TYPE_ANY then
+        editPermitted = true
+    elseif targetMember.value_type.string == type(VALUE) then
+        editPermitted = true
+    else        
+        error("Attempt to set member '"..tostring(KEY).."' in class '"..TABLE.__imp__.name.."' of type '"..targetMember.value_type.string.."' with value type '"..tostring(type(VALUE)).."' is disallowed")
+    end
+    
+    -- Conduct edit
+    if editPermitted == true then
+        TABLE.__inst__.memberValueOverrides[KEY] = VALUE    
     end
 end
 
