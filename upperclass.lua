@@ -101,8 +101,8 @@ function upperclass:dumpClassMembers(CLASS, SORT_COLUMN)
                 targetClass.__imp__.members[key].member_scope_set,
                 targetClass.__imp__.members[key].member_type,
                 targetClass.__imp__.members[key].value_type,
-                tostring(upperclass:getClassMember(targetClass, key).value_default),
-                tostring(upperclass:getClassMemberValue(targetClass, key)),
+                tostring(targetClass.__imp__.members[key].value_default),
+                tostring(targetClass.__inst__.memberValueOverrides[key]),
                 tostring(targetClass.__imp__.name),
             })
         end
