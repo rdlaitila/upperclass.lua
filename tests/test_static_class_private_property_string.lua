@@ -1,17 +1,17 @@
-local MyBaseClass = nil
-local status, err = nil
+--========================================================================
+local Class = upperclass:define("Class")
 
--- Check for error requiring the class
-status, err = pcall(function()
-    MyBaseClass = require('tests.MyBaseClass')
-end)
-if status == false then
-    return {result = false, message = err}    
-end
+property : myPrivateString {
+    "test";
+    get='private';
+    set='private';
+}
 
+Class = upperclass:compile(Class)
+--========================================================================
 -- Call a private property from outside of class
 local status, err = pcall(function () 
-    local value = MyBaseClass.privateBoolProperty
+    local value = Class.myPrivateString
 end)
 if status == true then
     return {result = false, message = "Attempt to access static private string outside of class was successful. This is bad!"}

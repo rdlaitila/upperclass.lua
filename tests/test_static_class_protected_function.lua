@@ -1,21 +1,15 @@
--- Attempt class creation
-status, err = pcall(function()
-    MyClassDefinition = upperclass:define("MyClass")
-    
-    function protected:protectedFunction()
-        return "SUCCESS"
-    end
-    
-    MyClass = upperclass:compile(MyClassDefinition)
-end)
-if status == false then
-    return {result = false, message = err}    
+--========================================================================
+local Class = upperclass:define("Class")
+
+function protected:myProtectedFunction()
+    return "Whatever"
 end
 
--- Attempt to call a public function from outside of class
-local value = nil
-status, err = pcall(function () 
-    value = MyClass:protectedFunction()    
+Class = upperclass:compile(Class)
+--========================================================================
+-- Call a private property from outside of class
+local status, err = pcall(function () 
+    local value = Class:myProtectedFunction()
 end)
 if status == true then
     return {result = false, message = "Attempt to access static protected function outside of class was successful. This is bad!"}

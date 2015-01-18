@@ -25,38 +25,38 @@ SOFTWARE.
 local upperclass = {}
 
 -- Our version: Major.Minor.Patch
-upperclass.version = "0.1.5"
+upperclass.version = "0.2.0"
 
 --
--- Define some static scope properties for use internally
+-- Define some static scope properties for use internally, respect existing global
 --
-UPPERCLASS_SCOPE_PRIVATE = {}
-UPPERCLASS_SCOPE_PROTECTED = {}
-UPPERCLASS_SCOPE_PUBLIC = {}
-UPPERCLASS_SCOPE_NOBODY = {}
+if UPPERCLASS_SCOPE_PRIVATE     == nil then UPPERCLASS_SCOPE_PRIVATE = {} end
+if UPPERCLASS_SCOPE_PROTECTED   == nil then UPPERCLASS_SCOPE_PROTECTED = {} end
+if UPPERCLASS_SCOPE_PUBLIC      == nil then UPPERCLASS_SCOPE_PUBLIC = {} end
+if UPPERCLASS_SCOPE_NOBODY      == nil then UPPERCLASS_SCOPE_NOBODY = {} end
 
 --
--- Define some member type properties for use internally
+-- Define some member type properties for use internally, respect existing global
 --
-UPPERCLASS_MEMBER_TYPE_PROPERTY = {}
-UPPERCLASS_MEMBER_TYPE_FUNCTION = {}
+if UPPERCLASS_MEMBER_TYPE_PROPERTY == nil then UPPERCLASS_MEMBER_TYPE_PROPERTY = {} end
+if UPPERCLASS_MEMBER_TYPE_FUNCTION == nil then UPPERCLASS_MEMBER_TYPE_FUNCTION = {} end
 
 -- 
--- Define some types
+-- Define some types, respect existing global
 --
-UPPERCLASS_TYPE_ANY         = {string='any'}
-UPPERCLASS_TYPE_STRING      = {string='string'}
-UPPERCLASS_TYPE_TABLE       = {string='table'}
-UPPERCLASS_TYPE_FUNCTION    = {string='function'}
-UPPERCLASS_TYPE_NUMBER      = {string='number'}
-UPPERCLASS_TYPE_USERDATA    = {string='userdata'}
-UPPERCLASS_TYPE_NIL         = {string='nil'}
-UPPERCLASS_TYPE_BOOLEAN     = {string='boolean'}
+if UPPERCLASS_TYPE_ANY      == nil then UPPERCLASS_TYPE_ANY         = {string='any'} end
+if UPPERCLASS_TYPE_STRING   == nil then UPPERCLASS_TYPE_STRING      = {string='string'} end
+if UPPERCLASS_TYPE_TABLE    == nil then UPPERCLASS_TYPE_TABLE       = {string='table'} end
+if UPPERCLASS_TYPE_FUNCTION == nil then UPPERCLASS_TYPE_FUNCTION    = {string='function'} end
+if UPPERCLASS_TYPE_NUMBER   == nil then UPPERCLASS_TYPE_NUMBER      = {string='number'} end
+if UPPERCLASS_TYPE_USERDATA == nil then UPPERCLASS_TYPE_USERDATA    = {string='userdata'} end
+if UPPERCLASS_TYPE_NIL      == nil then UPPERCLASS_TYPE_NIL         = {string='nil'} end
+if UPPERCLASS_TYPE_BOOLEAN  == nil then UPPERCLASS_TYPE_BOOLEAN     = {string='boolean'} end
 
 --
--- Global to indicate during metamethod calls that we wish to continue with default lookup behaviors
+-- Global to indicate during metamethod calls that we wish to continue with default lookup behaviors, respect existing global
 --
-UPPERCLASS_DEFAULT_BEHAVIOR = {}
+if UPPERCLASS_DEFAULT_BEHAVIOR == nil then UPPERCLASS_DEFAULT_BEHAVIOR = {} end
 
 --
 -- Holds the metatable used during the class definition stage
@@ -101,7 +101,7 @@ function upperclass:dumpClassMembers(CLASS, SORT_COLUMN)
                 targetClass.__imp__.members[key].member_scope_set,
                 targetClass.__imp__.members[key].member_type,
                 targetClass.__imp__.members[key].value_type,
-                tostring(upperclass:getClassMember(targetClass, key).value_default),
+                tostring(targetClass.__imp__.memberLookupCache[key].value_default),
                 tostring(upperclass:getClassMemberValue(targetClass, key)),
                 tostring(targetClass.__imp__.name),
             })
@@ -197,27 +197,6 @@ function upperclass:dumpClassMembers(CLASS, SORT_COLUMN)
 end
 
 --
--- Returns the specified class member, searching through all parents
---
-function upperclass:getClassMember(CLASS, KEY)
-    local targetClass = CLASS
-    local targetMember = nil
-    
-    while targetMember == nil do            
-        if targetClass.__imp__.members[KEY] ~= nil then
-            targetMember = targetClass.__imp__.members[KEY]            
-            break
-        elseif targetClass.__parent__ ~= nil then
-            targetClass = targetClass.__parent__
-        elseif targetClass.__parent__ == nil then
-            break
-        end            
-    end
-    
-    return targetMember
-end
-
---
 -- Returns all class members, searching through all parents
 --
 function upperclass:getClassMembers(CLASS, RECURSE)
@@ -250,34 +229,12 @@ end
 --
 -- Atempts to obtain a class member value
 --
-function upperclass:getClassMemberValue(CLASS, KEY, TARGET_MEMBER)    
-    local targetClass = CLASS    
-    
-    -- Attempt to find a memberValueOverride
-    while targetClass ~= nil do
-        if targetClass.__inst__.memberValueOverrides[KEY] ~= nil then
-            return targetClass.__inst__.memberValueOverrides[KEY].value
-        end
-        
-        if targetClass.__parent__ ~= nil then
-            targetClass = targetClass.__parent__
-        elseif targetClass.__parent__ == nil then
-            targetClass = nil
-        end
-    end
-    
-    -- Otherwise locate the member and return its value default
-    local targetMember = nil
-    if TARGET_MEMBER == nil then
-        targetMember = upperclass:getClassMember(CLASS, KEY)
+function upperclass:getClassMemberValue(CLASS, KEY)    
+    if rawget(CLASS, '__inst__').memberValueOverrides[KEY] ~= nil then
+        return rawget(CLASS, '__inst__').memberValueOverrides[KEY].value
     else
-        targetMember = TARGET_MEMBER
+        return rawget(CLASS, '__imp__').memberLookupCache[KEY].value_default
     end
-    if targetMember ~= nil then
-        return targetMember.value_default
-    end
-    
-    error("Unable to locate class member value")
 end
 
 --
@@ -293,11 +250,12 @@ function upperclass:define(CLASS_NAME, PARENT)
     classdef.protected_orig_value  = rawget(_G, "protected")
     classdef.property_orig_value   = rawget(_G, "property")
     
-    -- Create table to hold our class implimentation
-    classdef.__imp__ = {}
-  
-    -- Store the class name
-    classdef.__imp__.name = tostring(CLASS_NAME)
+    -- Create class implimentation table
+    classdef.__imp__ = {
+        name = tostring(CLASS_NAME),
+        members = {},
+        memberLookupCache = {}
+    }    
   
     -- Store the class file
     if debug ~= nil then
@@ -305,9 +263,6 @@ function upperclass:define(CLASS_NAME, PARENT)
     else
         classdef.__imp__.file = nil
     end
-    
-    -- Create table to hold our class memebers. table KEY is member name
-    classdef.__imp__.members = {}    
     
     -- Create tables to hold instance values
     classdef.__inst__ = {        
@@ -377,6 +332,39 @@ function upperclass:compile(CLASS)
     
     -- Set the class's metatable to ClassRuntimeMetatable
     setmetatable(CLASS, ClassRuntimeMetatable)
+    
+    -- Warm up the class member lookup cache
+    local targetClass = CLASS    
+    while targetClass ~= nil do
+        for key, value in pairs(targetClass.__imp__.members) do
+            if CLASS.__imp__.memberLookupCache[key] == nil then
+                CLASS.__imp__.memberLookupCache[key] = targetClass.__imp__.members[key]
+            end
+        end
+        if targetClass.__parent__ ~= nil then
+            targetClass = targetClass.__parent__
+        else
+            targetClass = nil            
+        end        
+    end
+    
+    -- bool used to see if we have a index metamethod
+    CLASS.__imp__.hasIndexMetamethod = false
+    if CLASS.__imp__.memberLookupCache['__index'] ~= nil then
+        CLASS.__imp__.hasIndexMetamethod = true    
+    end
+    
+    -- bool used to see if we have a new index metamethod
+    CLASS.__imp__.hasNewindexMetamethod = false
+    if CLASS.__imp__.memberLookupCache['__newindex'] ~= nil then
+        CLASS.__imp__.hasNewindexMetamethod = true    
+    end
+    
+    -- bool used to see if we have a tostring metamethod
+    CLASS.__imp__.hasTostringMetamethod = false
+    if CLASS.__imp__.memberLookupCache['__tostring'] ~= nil then
+        CLASS.__imp__.hasTostringMetamethod = true
+    end
     
     return CLASS
 end
@@ -648,43 +636,37 @@ end
 --
 -- ClassRuntimeMetatable __index method
 --
-function ClassRuntimeMetatable.__index(TABLE, KEY)    
+function ClassRuntimeMetatable.__index(TABLE, KEY)
     -- Ensure we return some important keys.
     if KEY == "__imp__" or KEY == "__inst__" or KEY == "__parent__" then
         return rawget(TABLE, KEY)
     end
+    
+    local classimp = rawget(TABLE, '__imp__')
+    local classinst = rawget(TABLE, '__inst__')
         
     -- Attempt to locate a user defined __index member and call it
-    if TABLE.__inst__.permitMetamethodCalls == true then
-        local indexMetamethodMember = upperclass:getClassMember(TABLE, '__index')                
-        if indexMetamethodMember ~= nil then
-            -- We must set permitMetamethodCalls to false to stop recursive behavior
-            TABLE.__inst__.permitMetamethodCalls = false            
+    if classimp.hasIndexMetamethod == true and classinst.permitMetamethodCalls == true then        
+        -- We must set permitMetamethodCalls to false to stop recursive behavior
+        classinst.permitMetamethodCalls = false            
             
-            -- Call the __index user defined member
-            local indexMetamethodMemberRetVal = indexMetamethodMember.value_default(TABLE, KEY)            
+        -- Call the __index user defined member
+        local indexMetamethodMemberRetVal = classimp.memberLookupCache['__index'].value_default(TABLE, KEY)            
             
-            -- Reenable permitMetamethodCalls
-            TABLE.__inst__.permitMetamethodCalls = true            
+        -- Reenable permitMetamethodCalls
+        classinst.permitMetamethodCalls = true            
             
-            if indexMetamethodMemberRetVal ~= UPPERCLASS_DEFAULT_BEHAVIOR then
-                return indexMetamethodMemberRetVal
-            end
-        end
+        if indexMetamethodMemberRetVal ~= UPPERCLASS_DEFAULT_BEHAVIOR then
+            return indexMetamethodMemberRetVal
+        end        
     end
     
-    -- Get caller function for use in private and protected lookups only if the debug library is present        
-    local caller = nil
-    if debug ~= nil then
-        caller = debug.getinfo(2, 'f').func            
-    end
-    
-    -- Attempt to locate a target member
-    local targetMember = upperclass:getClassMember(TABLE, KEY) 
+    -- get our target member
+    local targetMember = classimp.memberLookupCache[KEY]
     
     -- Halt if our target member is nil
     if targetMember == nil then
-        error("Attempt to obtain non-existant class member '"..tostring(KEY).."' in class '"..tostring(TABLE.__imp__.name).."' is disallowed")
+        error("Attempt to obtain non-existant class member '"..tostring(KEY).."' in class '"..tostring(classimp.name).."' is disallowed")
     end
     
     --[[
@@ -692,24 +674,25 @@ function ClassRuntimeMetatable.__index(TABLE, KEY)
     --]]
         
     -- Return members based on scope
-    if debug == nil or targetMember.member_scope_get == UPPERCLASS_SCOPE_PUBLIC then
-        --return TABLE.__inst__.memberValueOverrides[KEY] or targetMember.value_default                        
-        return upperclass:getClassMemberValue(TABLE, KEY, targetMember)
+    if targetMember.member_scope_get == UPPERCLASS_SCOPE_PUBLIC or debug == nil then        
+        return upperclass:getClassMemberValue(TABLE, KEY)
     elseif targetMember.member_scope_get == UPPERCLASS_SCOPE_PRIVATE then
+        local caller = debug.getinfo(2, 'f').func            
         local members = upperclass:getClassMembers(TABLE, false)
         for a=1, #members do                
             if caller == members[a].value_default then                
                 --return TABLE.__inst__.memberValueOverrides[KEY] or targetMember.value_default
-                return upperclass:getClassMemberValue(TABLE, KEY, targetMember)
+                return upperclass:getClassMemberValue(TABLE, KEY)
             end
         end        
         error("Attempt to retrieve private member '"..tostring(KEY).."' from outside of class '"..TABLE.__imp__.name.."' is disallowed")
     elseif targetMember.member_scope_get == UPPERCLASS_SCOPE_PROTECTED then
+        local caller = debug.getinfo(2, 'f').func            
         local members = upperclass:getClassMembers(TABLE, true)        
         for a=1, #members do                        
             if caller == members[a].value_default then                  
                 --return TABLE.__inst__.memberValueOverrides[KEY] or targetMember.value_default
-                return upperclass:getClassMemberValue(TABLE, KEY, targetMember)
+                return upperclass:getClassMemberValue(TABLE, KEY)
             end
         end          
         error("Attempt to retrieve protected member '"..tostring(KEY).."' from outside of class '"..TABLE.__imp__.name.."' is disallowed")
@@ -724,34 +707,28 @@ function ClassRuntimeMetatable.__newindex(TABLE, KEY, VALUE)
     if KEY == "__imp__" or KEY == "__inst__" or KEY == "__parent__" then
        error("Attempt to set internal class member '"..tostring(KEY).."' is disallowed")
     end
-        
-    -- Attempt to locate a user defined __newindex member and call it
-    if TABLE.__inst__.permitMetamethodCalls == true then
-        local newindexMetamethodMember = upperclass:getClassMember(TABLE, '__newindex')                
-        if newindexMetamethodMember ~= nil then
-            -- We must set permitMetamethodCalls to false to stop recursive behavior
-            TABLE.__inst__.permitMetamethodCalls = false            
-            
-            -- Call the __index user defined member
-            local newindexMetamethodMemberRetVal = newindexMetamethodMember.value_default(TABLE, KEY, VALUE)            
-            
-            -- Reenable permitMetamethodCalls
-            TABLE.__inst__.permitMetamethodCalls = true            
-            
-            if newindexMetamethodMemberRetVal ~= UPPERCLASS_DEFAULT_BEHAVIOR then
-                return newindexMetamethodMemberRetVal
-            end
-        end
-    end
     
-    -- Get caller function for use in private and protected lookups only if the debug library is present        
-    local caller = nil
-    if debug ~= nil then
-        caller = debug.getinfo(2, 'f').func            
+    local classimp = rawget(TABLE, '__imp__')
+    local classinst = rawget(TABLE, '__inst__')
+    
+    -- Attempt to locate a user defined __newindex member and call it
+    if classimp.hasNewindexMetamethod == true and classinst.permitMetamethodCalls == true then        
+        -- We must set permitMetamethodCalls to false to stop recursive behavior
+        classinst.permitMetamethodCalls = false            
+            
+        -- Call the __index user defined member
+        local newindexMetamethodMemberRetVal = classimp.memberLookupCache['__newindex'].value_default(TABLE, KEY, VALUE)            
+            
+        -- Reenable permitMetamethodCalls
+        classinst.permitMetamethodCalls = true            
+            
+        if newindexMetamethodMemberRetVal ~= UPPERCLASS_DEFAULT_BEHAVIOR then
+            return newindexMetamethodMemberRetVal
+        end        
     end
     
     -- Attempt to locate a target member
-    local targetMember = upperclass:getClassMember(TABLE, KEY) 
+    local targetMember = classimp.memberLookupCache[KEY]
     
     -- Halt if our target member is nil
     if targetMember == nil then
@@ -777,6 +754,7 @@ function ClassRuntimeMetatable.__newindex(TABLE, KEY, VALUE)
     if debug == nil or targetMember.member_scope_set == UPPERCLASS_SCOPE_PUBLIC then
         scopePermitted = true        
     elseif targetMember.member_scope_set == UPPERCLASS_SCOPE_PRIVATE then                 
+        local caller = debug.getinfo(2, 'f').func            
         local members = upperclass:getClassMembers(TABLE, false)
         for a=1, #members do                
             if caller == members[a].value_default then                                        
@@ -787,6 +765,7 @@ function ClassRuntimeMetatable.__newindex(TABLE, KEY, VALUE)
             error("Attempt to set private member '"..tostring(KEY).."' from outside class '"..TABLE.__imp__.name.."' is disallowed")
         end
     elseif targetMember.member_scope_set == UPPERCLASS_SCOPE_PROTECTED then
+        local caller = debug.getinfo(2, 'f').func            
         local members = upperclass:getClassMembers(TABLE, true)
         for a=1, #members do                
             if caller == members[a].value_default then                    
@@ -809,11 +788,29 @@ function ClassRuntimeMetatable.__newindex(TABLE, KEY, VALUE)
     
     -- Conduct edit
     if editPermitted == true then
-        TABLE.__inst__.memberValueOverrides[KEY] = {value=VALUE}
+        classinst.memberValueOverrides[KEY] = {value=VALUE}
     end
 end
 
 
+--
+-- ClassRuntimeMetatable __tostring method
+--
+function ClassRuntimeMetatable.__tostring(TABLE)
+    local classimp = rawget(TABLE, '__imp__')
+    local classinst = rawget(TABLE, '__inst__')
+    
+    if classimp.hasTostringMetamethod == true then
+        local tostringMetamethodRetVal = classimp.memberLookupCache['__tostring'].value_default(TABLE)        
+        if tostringMetamethodRetVal == UPPERCLASS_DEFAULT_BEHAVIOR then
+            return "class "..classimp.name
+        else
+            return tostringMetamethodRetVal
+        end
+    else
+        return "class "..classimp.name
+    end
+end
 --
 -- Return upperclass
 --

@@ -1,19 +1,17 @@
--- Attempt class creation
-local MyClassDefinition, MyClass, public, private, protected = nil
-status, err = pcall(function()
-    MyClassDefinition, public, private, protected = upperclass:define("MyClass")
-    
-    protected.protectedBoolean = true    
-    
-    MyClass = upperclass:compile(MyClassDefinition)
-end)
-if status == false then
-    return {result = false, message = err}    
-end
+--========================================================================
+local Class = upperclass:define("Class")
 
--- Attempt to call a public function from outside of class
-status, err = pcall(function () 
-    local value = MyClass.protectedBoolean  
+property : myProtectedBoolean {
+    false;
+    get='protected';
+    set='protected';
+}
+
+Class = upperclass:compile(Class)
+--========================================================================
+-- Call a private property from outside of class
+local status, err = pcall(function () 
+    local value = Class.myProtectedBoolean
 end)
 if status == true then
     return {result = false, message = "Attempt to access static protected boolean outside of class was successful. This is bad!"}

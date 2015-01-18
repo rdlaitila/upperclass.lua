@@ -4,6 +4,7 @@ Upperclass supports the following metamethods:
 
 * __index
 * __newindex
+* __tostring
 
 **WARNING:** utilizing metamethods is a highly advanced Lua topic. Improperly utilizing metamethods can cause race conditions, program locks, and other instabilities if you do not understand what is happending behind the scenes. If you require any clarifications please open a GitHub Issue for additional documentation.
 
@@ -61,3 +62,24 @@ When utilizing the __newindex metamethod of your class, you are permitted to use
 When utilizing the __newindex metamethod of your class, the resulting lookup will respect the scope when looking up members of a parent class. For instance, if the __index lookup of a member is of scope **private** in the parent class, upperclass will throw its default error for accessing a parent private member.
 
 When utilizing the __newindex metamethod of your class, upperclass will continue to enforce the member property type.
+
+## __tostring
+
+Upperclass fully supports a user defined __tostring method within class definitions. This method accepts no parameters
+
+```lua
+local MyClass = upperclass:define("MyClass")
+
+function private:__tostring()
+    if [SOME_CONDITION] then
+        return "Custom Tostring Value"
+    end
+   
+    -- Continue default tostring behavior
+    return UPPERCLASS_DEFAULT_BEHAVIOR   
+end
+
+MyClass = upperclass:compile(MyClass)
+```
+
+When utilizing the __tostring metamethod of your class, you are permitted to use the **self** reference to your class to retrieve class members.

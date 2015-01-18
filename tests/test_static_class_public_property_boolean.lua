@@ -1,28 +1,26 @@
--- Attempt class creation
-local MyClassDefinition, MyClass, public, private, protected = nil
-status, err = pcall(function()
-    MyClassDefinition, public, private, protected = upperclass:define("MyClass")
-    
-    public.booleanProperty = true
-    
-    MyClass = upperclass:compile(MyClassDefinition)
-end)
-if status == false then
-    return {result = false, message = err}    
-end
+--========================================================================
+local Class = upperclass:define("Class")
 
--- Attempt to call a public function from outside of class
-local value = nil
-status, err = pcall(function () 
-    value = MyClass.booleanProperty
+property : myPublicBoolean {
+    true;
+    get='public';
+    set='public';
+}
+
+Class = upperclass:compile(Class)
+--========================================================================
+-- Call a private property from outside of class
+local retval = nil
+local status, err = pcall(function () 
+    retval = Class.myPublicBoolean
 end)
-if status == false then
-    return {result = false, message = "Attempt to access static public boolean outside of class was not successful. err:"..tostring(err)}
-elseif status == true then
-    if value ~= true then
-        return {result = false, message = "Return value of static public boolean was not as expected. value:"..tostring(value)}
+if status == true then    
+    if retval == true then
+        return {result = true, message = "Test completed successfully"}
+    else        
+        return {result = false, message = "Attempt to access static public boolean failed with invalid retval"}
     end
+elseif status == false then
+    return {result = false, message = "Attempt to access static public boolean failed."}
 end
 
--- No other failures, return.
-return {result = true, message = "Test completed successfully"}

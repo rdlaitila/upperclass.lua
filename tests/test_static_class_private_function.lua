@@ -1,21 +1,15 @@
-local MyClass = nil
-local status, err = nil
+--========================================================================
+local Class = upperclass:define("Class")
 
--- Check for error defining the class
-status, err = pcall(function()    
-    MyClass = upperclass:define("MyClass")
-    
-    function private:privateFunction()
-        return "hello"
-    end
-end)
-if status == false then
-    return {result = false, message = err}    
+function private:myPrivateFunction()
+    return "Whatever"
 end
 
--- Attempt to call a private function from outside of class
-status, err = pcall(function () 
-    value = MyClass:privateFunction()
+Class = upperclass:compile(Class)
+--========================================================================
+-- Call a private property from outside of class
+local status, err = pcall(function () 
+    local value = Class:myPrivateFunction()
 end)
 if status == true then
     return {result = false, message = "Attempt to access static private function outside of class was successful. This is bad!"}

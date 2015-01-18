@@ -1,30 +1,24 @@
--- Attempt class creation
-local MyClassDefinition, MyClass, public, private, protected = nil
-status, err = pcall(function()
-    MyClassDefinition, public, private, protected = upperclass:define("MyClass")
-    
-    function public:publicFunction()
-        return "SUCCESS"
-    end
-    
-    MyClass = upperclass:compile(MyClassDefinition)
-end)
-if status == false then
-    return {result = false, message = err}    
+--========================================================================
+local Class = upperclass:define("Class")
+
+function public:myPublicFunction()
+    return "Whatever"
 end
 
--- Attempt to call a public function from outside of class
-local value = nil
-status, err = pcall(function () 
-    value = MyClass:publicFunction()    
+Class = upperclass:compile(Class)
+--========================================================================
+-- Call a private property from outside of class
+local retval = nil
+local status, err = pcall(function () 
+    retval = Class:myPublicFunction()
 end)
-if status == false then
-    return {result = false, message = "Attempt to access static public function outside of class was not successful. err:"..tostring(err)}
-elseif status == true then
-    if value ~= "SUCCESS" then
-        return {result = false, message = "Return value of static public function was not as expected. value:"..tostring(value)}
+if status == true then    
+    if retval == "Whatever" then
+        return {result = true, message = "Test completed successfully"}
+    else        
+        return {result = false, message = "Attempt to access static public function failed with invalid retval"}
     end
+elseif status == false then
+    return {result = false, message = "Attempt to access static public function failed."}
 end
 
--- No other failures, return.
-return {result = true, message = "Test completed successfully"}
