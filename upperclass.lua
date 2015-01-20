@@ -25,7 +25,7 @@ SOFTWARE.
 local upperclass = {}
 
 -- Our version: Major.Minor.Patch
-upperclass.version = "0.2.1"
+upperclass.version = "0.2.2"
 
 --
 -- Define some static scope properties for use internally, respect existing global
@@ -202,10 +202,8 @@ end
 function upperclass:getClassMember(CLASS, KEY)
     if rawget(CLASS, '__imp__').members[KEY] ~= nil then
         return rawget(CLASS, '__imp__').members[KEY]
-    else
-        if rawget(CLASS, '__parent__') ~= nil then
-            return upperclass:getClassMember(rawget(CLASS, '__parent__'), KEY)
-        end
+    elseif rawget(CLASS, '__parent__') ~= nil then
+        return upperclass:getClassMember(rawget(CLASS, '__parent__'), KEY)    
     end
 end
 
@@ -243,16 +241,12 @@ end
 -- Atempts to obtain a class member value
 --
 function upperclass:getClassMemberValue(CLASS, KEY)
-    if rawget(CLASS, '__imp__').members[KEY] ~= nil then
-        if rawget(CLASS, '__inst__').memberValueOverrides[KEY] ~= nil then
-            return rawget(CLASS, '__inst__').memberValueOverrides[KEY].value
-        else
-            return rawget(CLASS, '__imp__').members[KEY].value_default
-        end
-    else
-        if rawget(CLASS, '__parent__') ~= nil then
-            return upperclass:getClassMemberValue(rawget(CLASS, '__parent__'), KEY)
-        end
+    if rawget(CLASS, '__inst__').memberValueOverrides[KEY] ~= nil then
+        return rawget(CLASS, '__inst__').memberValueOverrides[KEY].value
+    elseif rawget(CLASS, '__imp__').members[KEY] ~= nil then        
+        return rawget(CLASS, '__imp__').members[KEY].value_default        
+    elseif rawget(CLASS, '__parent__') ~= nil then
+        return upperclass:getClassMemberValue(rawget(CLASS, '__parent__'), KEY)
     end
 end
 
@@ -621,12 +615,12 @@ function ClassRuntimeMetatable.__index(TABLE, KEY)
     local classinst = rawget(TABLE, '__inst__')
         
     -- Attempt to locate a user defined __index member and call it
-    if KEY ~= '__index' and classimp.members['__index'] ~= nil and classinst.permitMetamethodCalls == true then        
+    if KEY ~= '__index' and upperclass:getClassMember(TABLE, '__index') ~= nil and classinst.permitMetamethodCalls == true then        
         -- We must set permitMetamethodCalls to false to stop recursive behavior
         classinst.permitMetamethodCalls = false            
             
         -- Call the __index user defined member
-        local indexMetamethodMemberRetVal = classimp.members['__index'].value_default(TABLE, KEY)            
+        local indexMetamethodMemberRetVal = upperclass:getClassMember(TABLE, '__index').value_default(TABLE, KEY)            
             
         -- Reenable permitMetamethodCalls
         classinst.permitMetamethodCalls = true            
@@ -688,12 +682,12 @@ function ClassRuntimeMetatable.__newindex(TABLE, KEY, VALUE)
     local classinst = rawget(TABLE, '__inst__')
     
     -- Attempt to locate a user defined __newindex member and call it
-    if KEY ~= '__newindex' and classimp.members['__newindex'] ~= nil and classinst.permitMetamethodCalls == true then        
+    if KEY ~= '__newindex' and upperclass:getClassMember(TABLE, '__newindex') ~= nil and classinst.permitMetamethodCalls == true then        
         -- We must set permitMetamethodCalls to false to stop recursive behavior
         classinst.permitMetamethodCalls = false            
             
         -- Call the __index user defined member
-        local newindexMetamethodMemberRetVal = classimp.members['__newindex'].value_default(TABLE, KEY, VALUE)            
+        local newindexMetamethodMemberRetVal = upperclass:getClassMember(TABLE, '__newindex').value_default(TABLE, KEY, VALUE)            
             
         -- Reenable permitMetamethodCalls
         classinst.permitMetamethodCalls = true            
@@ -776,8 +770,8 @@ function ClassRuntimeMetatable.__tostring(TABLE)
     local classimp = rawget(TABLE, '__imp__')
     local classinst = rawget(TABLE, '__inst__')
     
-    if classimp.members['__tostring'] ~= nil then
-        local tostringMetamethodRetVal = classimp.members['__tostring'].value_default(TABLE)        
+    if upperclass:getClassMember(TABLE, '__tostring') ~= nil then
+        local tostringMetamethodRetVal = upperclass:getClassMember(TABLE, '__newindex').value_default(TABLE)        
         if tostringMetamethodRetVal == UPPERCLASS_DEFAULT_BEHAVIOR then
             return "class "..classimp.name
         else

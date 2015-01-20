@@ -33,7 +33,7 @@ end)
 
 local UpperclassInstance = Upperclass()
 timedTest("Class Public Property Get: upperclass", function()
-    local var = UpperclassInstance.myPublicStringProperty
+    local var = UpperclassInstance.myPublicStringProperty    
 end)
 
 local MiddleclassInstance = Middleclass:new()
