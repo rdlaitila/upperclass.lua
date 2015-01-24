@@ -63,7 +63,8 @@ end
 return upperclass:compile(CarFactory)
 ```
 
-** car.lua **
+**car.lua**
+
 ```lua
 local upperclass = require('upperclass')
 
@@ -99,7 +100,7 @@ end
 return upperclass:compile(Car)
 ```
 
-** landrover.lua **
+**landrover.lua**
 
 ```lua
 local upperclass = require('upperclass')
@@ -123,7 +124,8 @@ end
 return upperclass:compile(Landrover)
 ```
 
-** main.lua **
+**main.lua**
+
 ```lua
 local CarFactory = require('carfactory')
 
