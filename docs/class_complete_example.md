@@ -1,10 +1,12 @@
+**carfactory.lua**
+
 ```lua
-require('upperclass')
+local upperclass = require('upperclass')
+local LandRover = require('landrover')
 
-
---==============================================================
---= CAR FACTORY
---==============================================================
+--
+-- Define class
+--
 local CarFactory = upperclass:define("CarFactory")
 
 --
@@ -58,12 +60,16 @@ end
 --
 -- Compile Class
 --
-CarFactory = upperclass:compile(CarFactory)
+return upperclass:compile(CarFactory)
+```
 
+** car.lua **
+```lua
+local upperclass = require('upperclass')
 
---==============================================================
---= CAR 
---==============================================================
+--
+-- Define Class
+--
 local Car = upperclass:define("Car")
 
 --
@@ -90,12 +96,18 @@ end
 --
 -- Compile class
 --
-Car = upperclass:compile(Car)
+return upperclass:compile(Car)
+```
 
+** landrover.lua **
 
---==============================================================
---= Land Rover 
---==============================================================
+```lua
+local upperclass = require('upperclass')
+local Car = require('car')
+
+--
+-- Define Class
+--
 local Landrover = upperclass:define("Landrover", Car)
 
 --
@@ -108,10 +120,13 @@ end
 --
 -- Compile class
 --
-Landrover = upperclass:compile(Landrover)
+return upperclass:compile(Landrover)
+```
 
+** main.lua **
+```lua
+local CarFactory = require('carfactory')
 
---==============================================================
 local myCarFactory = CarFactory(5)
 local myLandRover = CarFactory:produceCar("Land Rover", "blue")
 print(myCarFactor.maxProductionCapacity)
