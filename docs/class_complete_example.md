@@ -130,9 +130,10 @@ return upperclass:compile(Landrover)
 local CarFactory = require('carfactory')
 
 local myCarFactory = CarFactory(5)
-local myLandRover = CarFactory:produceCar("Land Rover", "blue")
-print(myCarFactor.maxProductionCapacity)
-print(myCarFactor.numberOfCarsProduced)
+local myLandRover = myCarFactory:produceCar("Land Rover", "blue")
+
+print(myCarFactory.maxProductionCapacity)
+print(myCarFactory.numberOfCarsProduced)
 print(myLandRover.color)
 print(myLandRover.weight)
 ```
