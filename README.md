@@ -1,7 +1,17 @@
 lua-upperclass
 ==============
 
-Yet Another Lua Class Implimentation.
+![alt tag](https://raw.githubusercontent.com/admin36/lua-upperclass/tree/master/logo.gif)
+
+Lua Classes For The Privileged
+
+# Main Features
+
+* Simple and inviting class syntax
+* Scoped properties and methods
+* Strict types
+* Full user defined metamethod support (including __index and __newindex)
+* Single inheritance
 
 # Documentation
 
