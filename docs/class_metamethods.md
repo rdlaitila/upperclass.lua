@@ -5,8 +5,8 @@ Upperclass supports the following metamethods:
 * __index
 * __newindex
 * __tostring
-*__add
-*__sub
+* __add
+* __sub
 
 **WARNING:** utilizing metamethods is a highly advanced Lua topic. Improperly utilizing metamethods can cause race conditions, program locks, and other instabilities if you do not understand what is happending behind the scenes. If you require any clarifications please open a GitHub Issue for additional documentation.
 
