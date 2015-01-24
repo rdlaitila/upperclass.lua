@@ -5,6 +5,8 @@ Upperclass supports the following metamethods:
 * __index
 * __newindex
 * __tostring
+*__add
+*__sub
 
 **WARNING:** utilizing metamethods is a highly advanced Lua topic. Improperly utilizing metamethods can cause race conditions, program locks, and other instabilities if you do not understand what is happending behind the scenes. If you require any clarifications please open a GitHub Issue for additional documentation.
 
@@ -83,3 +85,35 @@ MyClass = upperclass:compile(MyClass)
 ```
 
 When utilizing the __tostring metamethod of your class, you are permitted to use the **self** reference to your class to retrieve class members.
+
+## __add
+
+Upperclass fully supports a user defined __add method within class definitions. This method accepts one parameters **RIGHT** which is the right side operator of the addition 
+
+```lua
+local MyClass = upperclass:define("MyClass")
+
+private.currentValue = 0
+
+function private:__add(RIGHT)
+    self.currentValue = self.currentValue + RIGHT
+end
+
+MyClass = upperclass:compile(MyClass)
+```
+
+## __sub
+
+Upperclass fully supports a user defined __sub method within class definitions. This method accepts one parameters **RIGHT** which is the right side operator of the subtraction 
+
+```lua
+local MyClass = upperclass:define("MyClass")
+
+private.currentValue = 0
+
+function private:__sub(RIGHT)
+    self.currentValue = self.currentValue - RIGHT
+end
+
+MyClass = upperclass:compile(MyClass)
+```

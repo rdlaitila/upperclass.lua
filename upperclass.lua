@@ -25,7 +25,7 @@ SOFTWARE.
 local upperclass = {}
 
 -- Our version: Major.Minor.Patch
-upperclass.version = "0.2.2"
+upperclass.version = "0.3.0"
 
 --
 -- Define some static scope properties for use internally, respect existing global
@@ -771,7 +771,7 @@ function ClassRuntimeMetatable.__tostring(TABLE)
     local classinst = rawget(TABLE, '__inst__')
     
     if upperclass:getClassMember(TABLE, '__tostring') ~= nil then
-        local tostringMetamethodRetVal = upperclass:getClassMember(TABLE, '__newindex').value_default(TABLE)        
+        local tostringMetamethodRetVal = upperclass:getClassMember(TABLE, '__tostring').value_default(TABLE)        
         if tostringMetamethodRetVal == UPPERCLASS_DEFAULT_BEHAVIOR then
             return "class "..classimp.name
         else
@@ -781,6 +781,31 @@ function ClassRuntimeMetatable.__tostring(TABLE)
         return "class "..classimp.name
     end
 end
+
+--
+-- ClassRuntimeMetatable __add method
+--
+function ClassRuntimeMetatable.__add(TABLE, RIGHT)
+    local classimp = rawget(TABLE, '__imp__')
+    local classinst = rawget(TABLE, '__inst__')
+    
+    if upperclass:getClassMember(TABLE, '__add') ~= nil then
+        return upperclass:getClassMember(TABLE, '__add').value_default(TABLE, RIGHT)
+    end
+end
+
+--
+-- ClassRuntimeMetatable __sub method
+--
+function ClassRuntimeMetatable.__sub(TABLE, RIGHT)
+    local classimp = rawget(TABLE, '__imp__')
+    local classinst = rawget(TABLE, '__inst__')
+    
+    if upperclass:getClassMember(TABLE, '__sub') ~= nil then
+        return upperclass:getClassMember(TABLE, '__sub').value_default(TABLE, RIGHT)
+    end
+end
+
 --
 -- Return upperclass
 --

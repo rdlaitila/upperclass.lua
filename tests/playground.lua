@@ -5,10 +5,19 @@ local upperclass = require('..upperclass')
 
 local Class = upperclass:define("Class")
 
+private.counter = 0
+
 function private:__tostring()
-    return "Custom Tostring Value"
+    return tostring(self.counter)
+end
+
+function private:__add(RIGHT)
+    self.counter = self.counter + RIGHT
+    return self.counter
 end
 
 Class = upperclass:compile(Class)
 
-print(Class)
+upperclass:dumpClassMembers(Class)
+
+print(Class + 1)
