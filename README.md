@@ -1,7 +1,7 @@
 lua-upperclass
 ==============
 
-![alt tag](https://raw.githubusercontent.com/admin36/lua-upperclass/tree/master/logo.gif)
+![alt tag](https://raw.githubusercontent.com/admin36/lua-upperclass/master/docs/logo.gif)
 
 Lua Classes For The Privileged
 
