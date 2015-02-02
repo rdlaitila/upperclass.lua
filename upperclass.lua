@@ -25,7 +25,7 @@ SOFTWARE.
 local upperclass = {}
 
 -- Our version: Major.Minor.Patch
-upperclass.version = "0.3.0"
+upperclass.version = "0.3.1"
 
 --
 -- Define some static scope properties for use internally, respect existing global
@@ -589,10 +589,8 @@ function ClassRuntimeMetatable.__call(...)
     setmetatable(instance, ClassRuntimeMetatable)
             
     -- Call class constructor
-    local passargs = {}
-    if #arguments > 1 then for a=2, #arguments do table.insert(passargs, arguments[a]) end end
     local __construct = self.__imp__.members["__construct"].value_default
-    __construct(instance, unpack(passargs))
+    __construct(instance, unpack(arguments, 2, table.maxn(arguments)))
      
     -- Construct parent
     if instance.__parent__ ~= nil and instance.__parent__.__inst__.isClassInstance == false then                         
