@@ -32,7 +32,7 @@ timedTest("Class Instantiation: middleclass", function()
 end)
 
 local UpperclassInstance = Upperclass()
-timedTest("Class Public Property Get: upperclass", function()
+timedTest("Class Public Property Get: upperclass", function()    
     local var = UpperclassInstance.myPublicStringProperty    
 end)
 
@@ -43,7 +43,7 @@ end)
 
 local UpperclassInstance = Upperclass()
 timedTest("Class Public Property Set: upperclass", function()
-    UpperclassInstance.myPublicStringProperty = "Edited"
+    UpperclassInstance.myPublicStringProperty = "Edited"        
 end)
 
 local MiddleclassInstance = Middleclass:new()
