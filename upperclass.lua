@@ -818,8 +818,9 @@ end
 -- ClassRuntimeMetatable __tostring method
 --
 function ClassRuntimeMetatable:__tostring()
-    if upperclass:getClassMember(self, '__tostring') ~= nil then
-        local tostringMetamethodRetVal = upperclass:getClassMember(self, '__tostring').value_default(self)        
+    local member = upperclass:getClassMember(self, '__tostring')
+    if member ~= nil then
+        local tostringMetamethodRetVal = member.value_default(self)        
         if tostringMetamethodRetVal == UPPERCLASS_DEFAULT_BEHAVIOR then
             return "class "..rawget(self, '__imp__').name
         else
@@ -834,8 +835,9 @@ end
 -- ClassRuntimeMetatable __add method
 --
 function ClassRuntimeMetatable:__add(RIGHT)
-    if upperclass:getClassMember(self, '__add') ~= nil then
-        return upperclass:getClassMember(self, '__add').value_default(self, RIGHT)
+    local member = upperclass:getClassMember(self, '__add')
+    if member ~= nil then
+        return member.value_default(self, RIGHT)
     else        
         upperclass:throw(errors.R_INVALID_METAMETHOD_LOOKUP, '__add', tostring(rawget(self, '__imp__').name))
     end
@@ -844,9 +846,10 @@ end
 --
 -- ClassRuntimeMetatable __sub method
 --
-function ClassRuntimeMetatable:__sub(RIGHT)
-    if upperclass:getClassMember(self, '__sub') ~= nil then
-        return upperclass:getClassMember(self, '__sub').value_default(self, RIGHT)
+function ClassRuntimeMetatable:__sub(RIGHT
+    local member = upperclass:getClassMember(self, '__sub')
+    if member ~= nil then
+        return member.value_default(self, RIGHT)
     else
         upperclass:throw(errors.R_INVALID_METAMETHOD_LOOKUP, '__sub', tostring(rawget(self, '__imp__').name))
     end
@@ -856,8 +859,9 @@ end
 -- ClassRuntimeMetatable __unm method
 --
 function ClassRuntimeMetatable:__unm()
-    if upperclass:getClassMember(self, '__unm') ~= nil then
-        return upperclass:getClassMember(self, '__unm').value_default(self)
+    local member = upperclass:getClassMember(self, '__unm')
+    if member ~= nil then
+        return member.value_default(self)
     else
         upperclass:throw(errors.R_INVALID_METAMETHOD_LOOKUP, '__unm', tostring(rawget(self, '__imp__').name))
     end
@@ -867,8 +871,9 @@ end
 -- ClassRuntimeMetatable __concat method
 --
 function ClassRuntimeMetatable:__concat(RIGHT)
-    if upperclass:getClassMember(self, '__concat') ~= nil then
-        return upperclass:getClassMember(self, '__concat').value_default(self, RIGHT)
+    local member = upperclass:getClassMember(self, '__concat')
+    if member ~= nil then
+        return member.value_default(self, RIGHT)
     else
         upperclass:throw(errors.R_INVALID_METAMETHOD_LOOKUP, '__concat', tostring(rawget(self, '__imp__').name))
     end
@@ -878,8 +883,9 @@ end
 -- ClassRuntimeMetatable __mul method
 --
 function ClassRuntimeMetatable:__mul(RIGHT)
-    if upperclass:getClassMember(self, '__mul') ~= nil then
-        return upperclass:getClassMember(self, '__mul').value_default(self, RIGHT)
+    local member = upperclass:getClassMember(self, '__mul')
+    if member ~= nil then
+        return member.value_default(self, RIGHT)
     else
         upperclass:throw(errors.R_INVALID_METAMETHOD_LOOKUP, '__mul', tostring(rawget(self, '__imp__').name))
     end
@@ -889,8 +895,9 @@ end
 -- ClassRuntimeMetatable __div method
 --
 function ClassRuntimeMetatable:__div(RIGHT)
-    if upperclass:getClassMember(self, '__div') ~= nil then
-        return upperclass:getClassMember(self, '__div').value_default(self, RIGHT)
+    local member = upperclass:getClassMember(self, '__div')
+    if member ~= nil then
+        return membervalue_default(self, RIGHT)
     else
         upperclass:throw(errors.R_INVALID_METAMETHOD_LOOKUP, '__div', tostring(rawget(self, '__imp__').name))
     end
@@ -900,8 +907,9 @@ end
 -- ClassRuntimeMetatable __mod method
 --
 function ClassRuntimeMetatable:__mod(RIGHT)
-    if upperclass:getClassMember(self, '__mod') ~= nil then
-        return upperclass:getClassMember(self, '__mod').value_default(self, RIGHT)
+    local member = upperclass:getClassMember(self, '__mod')
+    if member ~= nil then
+        return member.value_default(self, RIGHT)
     else
         upperclass:throw(errors.R_INVALID_METAMETHOD_LOOKUP, '__mod', tostring(rawget(self, '__imp__').name))
     end
@@ -911,8 +919,9 @@ end
 -- ClassRuntimeMetatable __pow method
 --
 function ClassRuntimeMetatable:__pow(RIGHT)
-    if upperclass:getClassMember(self, '__pow') ~= nil then
-        return upperclass:getClassMember(self, '__pow').value_default(self, RIGHT)
+    local member = upperclass:getClassMember(self, '__pow')
+    if member ~= nil then
+        return member.value_default(self, RIGHT)
     else
         upperclass:throw(errors.R_INVALID_METAMETHOD_LOOKUP, '__pow', tostring(rawget(self, '__imp__').name))
     end
@@ -922,8 +931,9 @@ end
 -- ClassRuntimeMetatable __eq method
 --
 function ClassRuntimeMetatable:__eq(RIGHT)
-    if upperclass:getClassMember(self, '__eq') ~= nil then
-        return upperclass:getClassMember(self, '__eq').value_default(self, RIGHT)
+    local member = upperclass:getClassMember(self, '__eq')
+    if member ~= nil then
+        return member.value_default(self, RIGHT)
     else
         upperclass:throw(errors.R_INVALID_METAMETHOD_LOOKUP, '__eq', tostring(rawget(self, '__imp__').name))
     end
@@ -933,8 +943,9 @@ end
 -- ClassRuntimeMetatable __lt method
 --
 function ClassRuntimeMetatable:__lt(RIGHT)
-    if upperclass:getClassMember(self, '__lt') ~= nil then
-        return upperclass:getClassMember(self, '__lt').value_default(self, RIGHT)
+    local member = upperclass:getClassMember(self, '__lt')
+    if member ~= nil then
+        return member.value_default(self, RIGHT)
     else
         upperclass:throw(errors.R_INVALID_METAMETHOD_LOOKUP, '__lt', tostring(rawget(self, '__imp__').name))
     end
@@ -944,8 +955,9 @@ end
 -- ClassRuntimeMetatable __le method
 --
 function ClassRuntimeMetatable:__le(RIGHT)
-    if upperclass:getClassMember(self, '__le') ~= nil then
-        return upperclass:getClassMember(self, '__le').value_default(self, RIGHT)
+    local member = upperclass:getClassMember(self, '__le')
+    if member ~= nil then
+        return member.value_default(self, RIGHT)
     else
         upperclass:throw(errors.R_INVALID_METAMETHOD_LOOKUP, '__le', tostring(rawget(self, '__imp__').name))
     end
@@ -955,8 +967,9 @@ end
 -- ClassRuntimeMetatable __gc method
 --
 function ClassRuntimeMetatable:__gc()
-    if upperclass:getClassMember(self, '__gc') ~= nil then
-        return upperclass:getClassMember(self, '__gc').value_default(self, RIGHT)
+    local member = upperclass:getClassMember(self, '__gc')
+    if member ~= nil then
+        return member.value_default(self, RIGHT)
     else
         upperclass:throw(errors.R_INVALID_METAMETHOD_LOOKUP, '__gc', tostring(rawget(self, '__imp__').name))
     end
@@ -966,8 +979,9 @@ end
 -- ClassRuntimeMetatable __len method
 --
 function ClassRuntimeMetatable:__len()
-    if upperclass:getClassMember(self, '__len') ~= nil then
-        return upperclass:getClassMember(self, '__len').value_default(self, RIGHT)
+    local member = upperclass:getClassMember(self, '__len')
+    if member ~= nil then
+        return member.value_default(self, RIGHT)
     else
         upperclass:throw(errors.R_INVALID_METAMETHOD_LOOKUP, '__len', tostring(rawget(self, '__imp__').name))
     end
