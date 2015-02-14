@@ -352,6 +352,17 @@ function upperclass:getScopeTableFromString(STRING)
 end
 
 --
+--
+--
+function upperclass:getMemberTypeTableFromValue(VALUE)
+    if type(VALUE) == "function" then 
+        return UPPERCLASS_MEMBER_TYPE_METHOD
+    else 
+        return UPPERCLASS_MEMBER_TYPE_PROPERTY 
+    end
+end
+
+--
 -- Upperclass Define function.
 --
 function upperclass:define(CLASS_NAME, PARENT)    
@@ -581,34 +592,14 @@ function ClassDefinitionMetatable.__newindex(TABLE, KEY, VALUE)
                 
     -- Create our members based on type and scope
     members[KEY] = {
-        member_scope_get = UPPERCLASS_SCOPE_NOBODY,                
-        member_scope_set = UPPERCLASS_SCOPE_NOBODY, 
-        member_type = (function()
-            if type(VALUE) == "function" then 
-                return UPPERCLASS_MEMBER_TYPE_METHOD
-            else 
-                return UPPERCLASS_MEMBER_TYPE_PROPERTY 
-            end
-        end)(),
-        value_type = (function() 
-            if type(VALUE) == "string" then 
-                return UPPERCLASS_TYPE_STRING 
-            elseif type(VALUE) == "table" then 
-                return UPPERCLASS_TYPE_TABLE
-            elseif type(VALUE) == "function" then 
-                return UPPERCLASS_TYPE_FUNCTION
-            elseif type(VALUE) == "number" then 
-                return UPPERCLASS_TYPE_NUMBER
-            elseif type(VALUE) == "userdata" then 
-                return UPPERCLASS_TYPE_USERDATA
-            elseif type(VALUE) == "boolean" then 
-                return UPPERCLASS_TYPE_BOOLEAN 
-            elseif VALUE == nil then 
-                return UPPERCLASS_TYPE_ANY 
-            end
-        end)(),
-        value_default = VALUE                      
-    }    
+        member_scope_get    = UPPERCLASS_SCOPE_NOBODY,                
+        member_scope_set    = UPPERCLASS_SCOPE_NOBODY, 
+        member_type         = upperclass:getMemberTypeTableFromValue(VALUE),
+        value_type          = upperclass:getTypeTableFromValue(VALUE),
+        value_default       = VALUE                      
+    }
+    
+    -- Determine member scopes
     if TABLE == rawget(_G, "public") then
         members[KEY].member_scope_get = UPPERCLASS_SCOPE_PUBLIC
         members[KEY].member_scope_set = UPPERCLASS_SCOPE_PUBLIC                 
