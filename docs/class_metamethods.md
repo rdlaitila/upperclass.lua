@@ -1,6 +1,6 @@
 # Class Metamethods
 
-Upperclass supports the following metamethods:
+Upperclass supports the following user defined metamethods:
 
 | METHOD                    | DESCRIPTION
 | ------------------------- | ------------
@@ -28,12 +28,14 @@ Upperclass supports the following metamethods:
 ```lua
 local MyClass = upperclass:define("MyClass")
 
+private.numSomeKeyAccessed = 0
+
 function private:__index(KEY)
     if KEY == 'somekey' then
-        return "somevalue"
+        self.numSomeKeyAccessed = self.numSomeKeyAccessed + 1        
     end
     
-    -- Continue Default Lookup Behavior otherwise
+    -- Continue Default Lookup Behavior Otherwise
     return UPPERCLASS_DEFAULT_BEHAVIOR
 end
 
@@ -45,34 +47,32 @@ MyClass = upperclass:compile(MyClass)
 ```lua
 local MyClass = upperclass:define("MyClass")
 
+private.somekey = "somedefault"
+
 function private:__newindex(KEY, VALUE)
     if KEY == 'somekey' then
-        -- Do some custom assignment
+        self.somekey = VALUE
     end
     
-    -- Continue Default Lookup Behavior otherwise
+    -- Continue Default Assignment Behavior Otherwise
     return UPPERCLASS_DEFAULT_BEHAVIOR
 end
 
 MyClass = upperclass:compile(MyClass)
 ```
 
-When utilizing the __newindex metamethod of your class, you are permitted to use the **self** reference to your class to retrieve class members.
-
-When utilizing the __newindex metamethod of your class, the resulting lookup will respect the scope when looking up members of a parent class. For instance, if the __index lookup of a member is of scope **private** in the parent class, upperclass will throw its default error for accessing a parent private member.
-
-When utilizing the __newindex metamethod of your class, upperclass will continue to enforce the member property type.
-
 ## __tostring
-
-Upperclass fully supports a user defined __tostring method within class definitions. This method accepts no parameters
 
 ```lua
 local MyClass = upperclass:define("MyClass")
 
+private.useCustomClassName = true
+
+private.customClassName = "My Custom Class Name"
+
 function private:__tostring()
-    if [SOME_CONDITION] then
-        return "Custom Tostring Value"
+    if self.useCustomClassName == true then
+        return self.customClassName
     end
    
     -- Continue default tostring behavior
@@ -82,11 +82,7 @@ end
 MyClass = upperclass:compile(MyClass)
 ```
 
-When utilizing the __tostring metamethod of your class, you are permitted to use the **self** reference to your class to retrieve class members.
-
 ## __add
-
-Upperclass fully supports a user defined __add method within class definitions. This method accepts one parameters **RIGHT** which is the right side operator of the addition 
 
 ```lua
 local MyClass = upperclass:define("MyClass")
