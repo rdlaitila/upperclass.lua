@@ -57,13 +57,14 @@ if UPPERCLASS_DEFAULT_BEHAVIOR == nil then UPPERCLASS_DEFAULT_BEHAVIOR = {} end
 -- Holds a list of errors
 --
 local errors = {
-    D_INVALID_PROPERTY_TYPE_ASSIGNMENT  = {errno=10,    stage="definition", message="Attempt to define class member property '%s' as type '%s' when supplied value is of type '%s' is disallowed"};
-    R_INVALID_MEMBER_LOOKUP             = {errno=200,   stage="runtime",    message="Attempt to obtain non-existant class member '%s' in class '%s' is disallowed"};
-    R_INVALID_SCOPE_ACCESS              = {errno=201,   stage="runtime",    message="Attempt to retrieve '%s' member '%s' from outside of class '%s' is disallowed"};    
-    R_INVALID_MEMBER_ASSIGNMENT         = {errno=202,   stage="runtime",    message="Attempt to set '%s' member '%s' in class '%s' is disallowed"};
-    R_INVALID_MEMBER_SCOPED_ASSIGNMENT  = {errno=203,   stage="runtime",    message="Attempt to set '%s' member '%s' from outside of class '%s' is disallowed"};
-    R_INVALID_MEMBER_TYPE_ASSIGNMENT    = {errno=204,   stage="runtime",    message="Attempt to set '%s' member '%s' of type '%s' with type '%s' in class '%s' is disallowed"};
-    R_INVALID_METAMETHOD_LOOKUP         = {errno=205,   stage="runtime",    message="Attempt to call '%s' metamethod on class '%s' is disallowed. No such metamethod defined"};
+    D_INVALID_EXISTING_MEMBER_ASSIGNMENT = {errno=0,    stage="definition",  message="Attempt to redefine existing member '%s' in class '%s' is disallowed"}; 
+    D_INVALID_PROPERTY_TYPE_ASSIGNMENT   = {errno=1,    stage="definition",  message="Attempt to define class member property '%s' as type '%s' when supplied value is of type '%s' is disallowed"};
+    R_INVALID_MEMBER_LOOKUP              = {errno=200,  stage="runtime",     message="Attempt to get class member '%s' in class '%s' is disallowed. No such member defined"};
+    R_INVALID_SCOPE_ACCESS               = {errno=201,  stage="runtime",     message="Attempt to retrieve '%s' member '%s' from outside of class '%s' is disallowed"};    
+    R_INVALID_MEMBER_ASSIGNMENT          = {errno=202,  stage="runtime",     message="Attempt to set '%s' member '%s' in class '%s' is disallowed"};
+    R_INVALID_MEMBER_SCOPED_ASSIGNMENT   = {errno=203,  stage="runtime",     message="Attempt to set '%s' member '%s' from outside of class '%s' is disallowed"};
+    R_INVALID_MEMBER_TYPE_ASSIGNMENT     = {errno=204,  stage="runtime",     message="Attempt to set '%s' member '%s' of type '%s' with type '%s' in class '%s' is disallowed"};
+    R_INVALID_METAMETHOD_LOOKUP          = {errno=205,  stage="runtime",     message="Attempt to call '%s' metamethod on class '%s' is disallowed. No such metamethod defined"};
 }
 
 --
@@ -299,7 +300,8 @@ function upperclass:getTypeTableFromValue(VALUE)
         
     elseif type(VALUE) == 'table' and rawget(VALUE, "__imp__") ~= nil then
         return UPPERCLASS_TYPE_CLASS
-        
+    else
+        return UPPERCLASS_TYPE_ANY
     end
 end
 
@@ -352,7 +354,7 @@ function upperclass:getScopeTableFromString(STRING)
 end
 
 --
---
+-- Attempts to locate member type table from value
 --
 function upperclass:getMemberTypeTableFromValue(VALUE)
     if type(VALUE) == "function" then 
@@ -540,11 +542,11 @@ end
 --
 -- ClassDefinitionMetatable __index method
 --
-function ClassDefinitionMetatable.__index(TABLE, KEY)
+function ClassDefinitionMetatable:__index(KEY)
     -- Check what kind of index we are retreiving. If requesting table is 'property'
     -- we must create a skeleton member entry with the requested key for later use 
     -- in the __call metamethod.
-    if TABLE == property then
+    if self == property then
         -- Get our implimentation table
         local imp = rawget(ClassDefinitionMetatable.classDefinitionTable, "__imp__")
         
@@ -552,8 +554,8 @@ function ClassDefinitionMetatable.__index(TABLE, KEY)
         local members = rawget(imp, "members")
          
         -- Ensure we are not redefining an existing member
-        if members[KEY] ~= nil then
-            error("Attempt to redefine existing member '"..KEY.."' in class '"..imp.name.."' is disallowed")
+        if members[KEY] ~= nil then            
+            upperclass:throw(errors.D_INVALID_EXISTING_MEMBER_ASSIGNMENT, tostring(KEY), tostring(imp.name))            
         end
          
         -- Setup our member property table with defaults that will be later thrown away
@@ -571,7 +573,7 @@ function ClassDefinitionMetatable.__index(TABLE, KEY)
            
         return property
     else
-        return rawget(TABLE, KEY)
+        return rawget(self, KEY)
     end
 end
 
@@ -846,7 +848,7 @@ end
 --
 -- ClassRuntimeMetatable __sub method
 --
-function ClassRuntimeMetatable:__sub(RIGHT
+function ClassRuntimeMetatable:__sub(RIGHT)
     local member = upperclass:getClassMember(self, '__sub')
     if member ~= nil then
         return member.value_default(self, RIGHT)
