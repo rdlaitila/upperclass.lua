@@ -672,7 +672,7 @@ function ClassRuntimeMetatable:__index(KEY)
         rawget(self, '__inst__').permitMetamethodCalls = false            
             
         -- Call the __index user defined member
-        local indexMetamethodMemberRetVal = upperclass:getClassMember(self, '__index').value_default(TABLE, KEY)            
+        local indexMetamethodMemberRetVal = upperclass:getClassMember(self, '__index').value_default(self, KEY)            
             
         -- Reenable permitMetamethodCalls
         rawget(self, '__inst__').permitMetamethodCalls = true            
