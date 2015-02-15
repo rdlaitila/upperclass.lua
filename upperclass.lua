@@ -824,12 +824,12 @@ function ClassRuntimeMetatable:__tostring()
     if member ~= nil then
         local tostringMetamethodRetVal = member.value_default(self)        
         if tostringMetamethodRetVal == UPPERCLASS_DEFAULT_BEHAVIOR then
-            return "class "..rawget(self, '__imp__').name
+            return "class "..rawget(self, '__imp__').name.." ("..tostring(self.__inst__)..")"
         else
             return tostringMetamethodRetVal
         end
     else
-        return "class "..rawget(self, '__imp__').name
+        return "class "..rawget(self, '__imp__').name.." ("..tostring(self.__inst__)..")"
     end
 end
 

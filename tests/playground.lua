@@ -2,22 +2,38 @@
 This file is just for quick testing of things and is not apart of the main test suite
 ]]
 local upperclass = require('..upperclass')
+---------------------------------------
+local Node = upperclass:define("Node")
 
-local Class = upperclass:define("Class")
+property : ownerNode {
+    nil;
+    get='public';
+    set='public';
+    type='any';
+}
 
-private.counter = 0
+public.childNodes = nil
 
-function private:__tostring()
-    return tostring(self.counter)
+function private:__construct()
+    self.childNodes = {}
+    self.ownerNode = self
 end
 
-function private:__add(RIGHT)
-    self.counter = self.counter + RIGHT
-    return self.counter
+function public:appendChild(CHILD)
+    CHILD.ownerNode = self
+    table.insert(self.childNodes, CHILD)
 end
 
-Class = upperclass:compile(Class)
+Node = upperclass:compile(Node)
+---------------------------------------
+local Document = upperclass:define("Document", Node)
 
-upperclass:dumpClassMembers(Class)
+Document = upperclass:compile(Document)
+---------------------------------------
 
-print(Class + 1)
+
+local document = Document()
+local node = Node()
+
+print(document, document.ownerNode)
+print(node, node.ownerNode)
