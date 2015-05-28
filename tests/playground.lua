@@ -1,39 +1,23 @@
---[[
-This file is just for quick testing of things and is not apart of the main test suite
-]]
+print(collectgarbage('count'))
+
 local upperclass = require('..upperclass')
----------------------------------------
-local Node = upperclass:define("Node")
 
-property : ownerNode {
-    nil;
-    get='public';
-    set='public';
-    type='any';
-}
+local Class = upperclass:define('Class')
 
-public.childNodes = nil
+Class = upperclass:compile(Class)
 
-function private:__construct()
-    self.childNodes = {}
-    self.ownerNode = self
+local objects = {}
+
+for a=1, 100000 do
+    table.insert(objects, Class())
 end
 
-function public:appendChild(CHILD)
-    CHILD.ownerNode = self
-    table.insert(self.childNodes, CHILD)
-end
+print('done')
 
-Node = upperclass:compile(Node)
----------------------------------------
-local Document = upperclass:define("Document", Node)
+print(collectgarbage('count'))
 
-Document = upperclass:compile(Document)
----------------------------------------
+objects = nil
 
+collectgarbage()
 
-local document = Document()
-local node = Node()
-
-print(document, document.ownerNode)
-print(node, node.ownerNode)
+print(collectgarbage('count'))
