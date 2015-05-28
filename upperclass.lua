@@ -75,8 +75,8 @@ local ClassRuntimeMetatable = {}
 --
 function upperclass:throw(ERROR, ...)
     local errorname = nil
-    for key, value in pairs(errors) do
-        if errors[key] == ERROR then
+    for key, value in pairs(upperclass) do
+        if upperclass[key] == ERROR then
             errorname = key
             break
         end
@@ -934,7 +934,12 @@ function ClassRuntimeMetatable:__eq(RIGHT)
     if member ~= nil then
         return member.value_default(self, RIGHT)
     else
-        upperclass:throw(upperclass.R_INVALID_METAMETHOD_LOOKUP, '__eq', tostring(rawget(self, '__imp__').name))
+        local comp = false
+        local mt = getmetatable(self)
+        setmetatable(self, nil)        
+        if self == RIGHT then comp = true end
+        setmetatable(self, mt)
+        return comp
     end
 end
 
@@ -965,14 +970,14 @@ end
 --
 -- ClassRuntimeMetatable __gc method
 --
-function ClassRuntimeMetatable:__gc()
+--[[function ClassRuntimeMetatable:__gc()
     local member = upperclass:getClassMember(self, '__gc')
     if member ~= nil then
         return member.value_default(self, RIGHT)
     else
         upperclass:throw(upperclass.R_INVALID_METAMETHOD_LOOKUP, '__gc', tostring(rawget(self, '__imp__').name))
     end
-end
+end]]
 
 --
 -- ClassRuntimeMetatable __len method
