@@ -1,23 +1,87 @@
-print(collectgarbage('count'))
-
 local upperclass = require('..upperclass')
 
-local Class = upperclass:define('Class')
+local class = upperclass:define('Base')
 
-Class = upperclass:compile(Class)
+--
+--
+--
+class.protected.biz {
+    type='string';
+    setter='public';
+    default='test';
+}
 
-local objects = {}
+--
+--
+--
+class.protected:baz {
+    default='Hello, World 2';
+}
 
-for a=1, 100000 do
-    table.insert(objects, Class())
+--
+--
+--
+function class.protected:init()
+    print("Base:init")
 end
 
-print('done')
+--
+-- 
+--
+function class.protected:__index(key)    
+    if key == 'whenever' then
+        return 'whenever'
+    end
+    
+    return self[key]
+end
 
-print(collectgarbage('count'))
+--
+--
+--
+local Base = upperclass:compile(class)
 
-objects = nil
+--====================================================================================
+--====================================================================================
 
-collectgarbage()
+--
+--
+--
+local class = upperclass:define('Extend', Base)
 
-print(collectgarbage('count'))
+--
+--
+--
+function class.public:init()
+    print("Extend:init")
+    Base.init(self)
+end
+
+--
+-- 
+--
+function class.private:__index(key)  
+    if key == 'whatever' then
+        return 'whatever'
+    end
+       
+    return Base.__index(self, key)
+end
+
+--
+--
+--
+function class.public:getBiz()
+    return self.biz
+end
+
+--
+--
+--
+local Extend = upperclass:compile(class)
+
+local extend = Extend()
+print(extend.whatever)
+print(extend.whenever)
+extend.biz = "someting"
+print(extend:getBiz())
