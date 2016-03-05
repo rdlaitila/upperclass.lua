@@ -1,87 +1,38 @@
 local upperclass = require('..upperclass')
 
-local class = upperclass:define('Base')
+-- ::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 --
+-- Define our class
 --
+local class = upperclass:define('lure.dom.Document')
+
 --
-class.protected.biz {
-    type='string';
-    setter='public';
-    default='test';
+-- Here you can specify class implimentations that will be 
+-- inherited by this class. You can specify a single class
+-- implimentation for single inheritance or multiple classes
+-- for multiple inheritance. You can specify the class name
+-- as a string or the actual complied class object
+--
+class.inherits {
+    'lure.dom.Base';
+    'lure.dom.Node';
+}
+
+--
+-- Specify interfaces of other classes that this class impliments
+--
+class.impliments {
+    'lure.dom.Base';
+    'lure.dom.Node';
 }
 
 --
 --
 --
-class.protected:baz {
-    default='Hello, World 2';
+class.public.documentElement {
+    default=nil;
+    nullable=true;
+    setter='private';
+    type='lure.dom.Node';
 }
-
---
---
---
-function class.protected:init()
-    print("Base:init")
-end
-
---
--- 
---
-function class.protected:__index(key)    
-    if key == 'whenever' then
-        return 'whenever'
-    end
-    
-    return self[key]
-end
-
---
---
---
-local Base = upperclass:compile(class)
-
---====================================================================================
---====================================================================================
-
---
---
---
-local class = upperclass:define('Extend', Base)
-
---
---
---
-function class.public:init()
-    print("Extend:init")
-    Base.init(self)
-end
-
---
--- 
---
-function class.private:__index(key)  
-    if key == 'whatever' then
-        return 'whatever'
-    end
-       
-    return Base.__index(self, key)
-end
-
---
---
---
-function class.public:getBiz()
-    return self.biz
-end
-
---
---
---
-local Extend = upperclass:compile(class)
-
-local extend = Extend()
-print(extend.whatever)
-print(extend.whenever)
-extend.biz = "someting"
-print(extend:getBiz())

@@ -33,9 +33,14 @@ local upperclass = {}
 upperclass.version = "0.4.0-dev"
 
 --
+-- Table to use for all expect calls
+--
+local expectTable = {}
+
+--
 -- Registry holds the implimenation of all
 -- defined classes. Upperclass makes heavy
--- use of the registry to locate members, 
+-- use of the registry to locate members,
 -- callers, parents and childs etc
 --
 local registry = {}
@@ -58,35 +63,116 @@ local RuntimeMetatable = {}
 --
 -- expect
 --
-function upperclass:expect(value) 
-    return {
-        type = function(self, expected)
-            local result = upperclass:type(value)
-            if result ~= expected then
-                error(string.format("Expected type '%s' recieved type '%s'", expected, result))
-            end
-            return self
-        end;
-        
-        gt = function(self, expected)
-            if value <= expected then
-                error(string.format("Expected Greater Than '%s' recieved '%s'", expected, value))
-            end
-            return self
-        end;
-    }    
+function upperclass:expect(value)
+    expectTable.__fallthrough = false;
+    expectTable.__value = value;
+    expectTable.__errors = {};
+    return expectTable
+end
+
+--
+-- expect_gt
+--
+function upperclass:expect_gt(expected)
+    if self.__fallthrough then return self end
+    
+    if self.__value == nil or self.__value <= expected then
+        table.insert(
+            self.__errors, 
+            {'gt', string.format("Expected Greater Than '%s' recieved '%s'", expected, self.__value)
+        })        
+        self.__fallthrough = true
+    end
+    return self 
+end
+
+--
+-- expect_gte
+--
+function upperclass:expect_gte(expected)
+    if self.__fallthrough then return self end
+    
+    if self.__value == nil or self.__value < expected then
+        table.insert(
+            self.__errors, 
+            {'gte', string.format("Expected Greater or Equal to '%s' recieved '%s'", expected, self.__value)
+        })
+        self.__fallthrough = true
+    end
+    return self 
+end
+
+--
+-- expect_not
+--
+function upperclass:expect_ne(expected)
+    if self.__fallthrough then return self end
+    
+    if self.__value == expected then
+        table.insert(
+            self.__errors, 
+            {'ne', string.format("Expected '%s' to not equal '%s'", self.__value, expected)
+        })
+        self.__fallthrough = true
+    end
+    return self
+end
+
+--
+-- expect_type
+--
+function upperclass:expect_type(expected)
+    if self.__fallthrough then return self end
+    
+    local result = upperclass:type(self.__value)
+    if result ~= expected then
+        table.insert(
+            self.__errors, 
+            {'type', string.format("Expected type '%s' recieved type '%s'", expected, result)
+        })
+        self.__fallthrough = true
+    end
+    return self
+end
+
+--
+-- expect_throw
+--
+function upperclass:expect_throw()
+    if #self.__errors > 0 then
+        upperclass:throw(self.__errors[1][2])
+    end
+end
+
+--
+-- expect_call
+--
+function upperclass:expect_call(func)
+    if func ~= nil then
+        func(self.__value, self.__errors)
+    end
 end
 
 --
 -- Define
 --
-function upperclass:define(name, parent)  
-    if name == nil then
-        upperclass:throw("Attempt to define class without a name is disallowed")
+function upperclass:define(name, parent, impliments)
+    upperclass:expect(name):type('string'):ne(''):throw()
+
+    if parent ~= nil and rawtype(parent) == 'table' and parent.__isupperclass then
+        parent = registry[parent.__name]
     end
-    
-    if parent ~= nil then parent = parent.__obj.classdef or nil end
-    
+
+    if impliments ~= nil and rawtype(impliments) ~= 'table' then
+        upperclass:throw("Argument 'impliments' must be a table")
+    elseif impliments ~= nil and rawtype(impliments) == 'table' then
+        for index, iface in ipairs(impliments) do
+            if rawtype(iface) ~= 'table' or iface.__isupperclass == nil then
+                upperclass:throw("Impliments table index %s is not a class", index)
+            end
+        end
+    end
+
     --
     -- Check our registry for a class already defined
     -- with the same name supplied from the user
@@ -102,248 +188,127 @@ function upperclass:define(name, parent)
             callers   = {
                 private = {};
                 protected = {};
-            }
+            };
+            impliments = impliments;
         }
-        
+
         if parent ~= nil then
-            registry[name].parent.childs[name] = registry[name]
+            parent.childs[name] = registry[name]
         end
     end
-    
+
     --
     -- Hold a reference to our spot in the registry
     --
     local classdef = registry[name]
-    
+
     --
     -- hold a reference to our members
     --
     local members = classdef.members
-    
+
+    --
+    -- Holds the last scope supplied during definition
+    --
+    local lastscope = 'public'
+
     --
     -- Metatables
-    --    
+    --
     local DefinitionMetatable = {}
-    
-    --
-    -- Scope Tables
-    --
-    local public, private, protected, static = {scope='public'}, {scope='private'}, {scope='protected'}, {scope='static'};
-    setmetatable(public, DefinitionMetatable)
-    setmetatable(private, DefinitionMetatable)
-    setmetatable(protected, DefinitionMetatable)
-    setmetatable(static, DefinitionMetatable)
-    
+
     --
     -- Static Metatable
     --
     function DefinitionMetatable:__index(key)
-        if key == 'public' then return public end
-        if key == 'private' then return private end
-        if key == 'protected' then return protected end
-        if key == 'static' then return static end                
-        if self == public or self == private or self == protected or self == static then
-            return function(scopetable, proptable)
-                members[key] = {
-                    getter = scopetable.scope or 'public';
-                    setter = proptable.setter or scopetable.scope;
-                    nullable = proptable.nullable or false;
-                    type = proptable.type or 'any';
-                    default = proptable.default or proptable[1] or nil;
-                    init = proptable.init;
-                }
-                
-                if members[key].type ~= 'any' and members[key].type ~= upperclass:type(members[key].default) then
-                    upperclass:throw("default/type mismatch in property '%s' in '%s'", key, classdef.name)
-                end
-            end
+        if key == 'public' or key == 'private' or key == 'protected' or key == 'static' then
+            lastscope = key;return self
         end
+        
+        return function(...)
+            local args = {...}
+            local proptable = nil
+            
+            if #args == 0 then
+                upperclass:throw("No property table supplied to member definition '%s'", key)
+            else
+                proptable = args[#args]
+            end
+            
+            members[key] = {
+                getter = proptable.getter or lastscope;
+                setter = proptable.setter or lastscope;
+                nullable = proptable.nullable or false;
+                default = proptable.default;
+                types = {};
+            }
+            
+            local function parsetypes(types, t)
+                if rawtype(t) == 'string' then
+                    table.insert(types, t)
+                elseif rawtype(t) == 'table' and t.__isupperclass ~= nil and t.__name ~= nil then
+                    table.insert(types, t.__name)
+                elseif rawtype(t) == 'table' then
+                    for _, item in ipairs(t) do
+                        types = parsetypes(types, item)
+                    end
+                end
+                return types
+            end
+            members[key].types = parsetypes({}, proptable.type)
+
+            if members[key].types['any'] ~= nil and members[key].default ~= nil and members[key].type ~= upperclass:type(members[key].default) then
+                upperclass:throw("default/type mismatch in property '%s' in '%s'", key, classdef.name)
+            end
+            
+            lastscope = 'public'
+        end        
     end
     function DefinitionMetatable:__newindex(key, value)
-        if self == public or self == private or self == protected or self == static then
-            members[key] = {
-                getter = self.scope or 'public';
-                setter = 'nobody';
-                nullable = false;
-                type = 'function';
-                default = value;                
-            }
-            table.insert(classdef.callers.private, value)
-            table.insert(classdef.callers.protected, value)
-            local parent = classdef.parent
-            while parent ~= nil do
-                table.insert(parent.callers.protected, value)
-                parent = parent.parent
-            end
+        members[key] = {
+            getter = lastscope;
+            setter = 'nobody';
+            nullable = false;
+            type = 'function';
+            default = value;
+        }
+        
+        table.insert(classdef.callers.private, value)
+        table.insert(classdef.callers.protected, value)
+        local parent = classdef.parent
+        while parent ~= nil do
+            table.insert(parent.callers.protected, value)
+            parent = parent.parent
         end
+        
+        lastscope = 'public'
     end
-    
-    return setmetatable(classdef, DefinitionMetatable)    
+
+    return setmetatable({__name=name}, DefinitionMetatable)
 end
 
 --
 -- Compile
 --
-function upperclass:compile(classdef)
-    --
-    -- Strip metatables
-    --
-    setmetatable(classdef, nil)
-    
+function upperclass:compile(classobj)
+    local classdef = registry[classobj.__name]
+
     --
     -- Object is our static/instantiable table
     --
     local object = {
-        __obj = {
-            classdef=classdef;
-            instance=false;
-            mmindex=true;
-            mmnewindex=true;
-            overrides={};
-        }
+        __name = classdef.name;
+        __overrides = {};
+        __isinstance = false;
+        __isupperclass = true;
+        __mmindex=true;
+        __mmnewindex=true;
     }
-    
+
     --
     -- Return
     --
     return setmetatable(object, RuntimeMetatable)
-end
-
---
--- __call
---
-function RuntimeMetatable:__call(...)       
-    local obj = rawget(self, '__obj')
-    
-    local instance = setmetatable({
-        __obj = {
-            classdef=obj.classdef;
-            instance=true;
-            mmindex=true;
-            mmnewindex=true;
-            overrides={};
-        }
-    }, RuntimeMetatable)
-    
-    if obj.classdef.members['init'] ~= nil then
-        instance:init(...)
-    end
-    
-    return instance
-end
-
---
--- __index
---
-function RuntimeMetatable:__index(key)
-    local obj = self.__obj
-    local mdef, member = obj.classdef, obj.classdef.members[key]
-        
-    if member == nil and key ~= '__index' and obj.mmindex and obj.classdef.members['__index'] ~= nil  then
-        obj.mmindex = false
-        local val = obj.classdef.members['__index'].default(self, key)
-        obj.mmindex = true
-        return val
-    elseif member == nil and mdef.parent ~= nil then
-        mdef = mdef.parent
-        while mdef ~= nil do
-            if mdef.members[key] ~= nil then
-                member = mdef.members[key]
-                break
-            else
-                mdef = mdef.parent
-            end
-        end
-    end
-    
-    if member == nil then
-        upperclass:throw("Attempt to index non-existant member %s is disallowed", key)
-    end
-    
-    -- Check scopes
-    if rawdebug == nil or member.getter == 'public' then   
-        local override = obj.overrides[key]
-        if override == nil then 
-            return member.default
-        else 
-            return override.value
-        end 
-    elseif member.getter == 'private' or member.getter == 'protected' then
-        local caller = rawdebug.getinfo(2, 'f').func
-        for _, func in ipairs(mdef.callers[member.getter]) do
-            if func == caller then                    
-                local override = obj.overrides[key]
-                if override == nil then 
-                    return member.default
-                else 
-                    return override.value
-                end 
-            end
-        end
-        upperclass:throw("Attempt to access '%s' member '%s' of class '%s' from outside of class is disallowed", member.getter, key, def.name)
-    end
-    
-    upperclass:throw("Attempt to index member failed")
-end
-
---
--- __newindex
---
-function RuntimeMetatable:__newindex(key, value)        
-    local obj = rawget(self, '__obj')
-   
-    if key ~= '__newindex' and obj.classdef.members['__newindex'] ~= nil and obj.mmnewindex then
-        obj.mmnewindex = false
-        local __newindex = obj.classdef.members['__newindex'].default
-        __newindex(self, key, value)
-        obj.mmnewindex = true
-    end
-    
-    local def, member = upperclass:lookup(obj.classdef, key)                
-    
-    -- If member is nil and we are not within a __index metamethod
-    if member == nil and obj.mmnewindex == true then
-        upperclass:throw("Attempt to newindex non-existant member %s is disallowed", key)
-    end
-    
-    -- If member is nil and we are within a __index metamethod
-    if member == nil and obj.mmnewindex == false then
-        return nil
-    end
-   
-    -- Bool indicating if we are of proper scope
-    local scopepermit = false
-   
-    if rawdebug == nil or member.setter == 'public' then            
-        scopepermit = true
-    elseif member.setter == 'private' or member.setter == 'protected' then
-        local caller = rawdebug.getinfo(2, 'f').func
-        for _, func in pairs(def.callers[member.setter]) do
-            if func == caller then
-                scopepermit = true
-                break
-            end
-        end
-        upperclass:throw("Attempt to assign value to '%s' member failed. Caller is not in scope", member.setter)
-    else
-        upperclass:throw("Attempt to assign value to member with setter scope of '%s' is disallowed", member.setter)
-    end
-    
-    if scopepermit then
-        local valuetype = upperclass:type(value)
-        if member.type == 'any' or value == nil and member.nullable or upperclass:type(value) == member.type then
-            if obj.overrides[key] ~= nil then 
-                obj.overrides[key].value = value 
-            else 
-                obj.overrides[key] = {value=value}
-            end
-            return
-        else
-            upperclass:throw("Attempt to assign value of type '%s' to member of type '%s' is disallowed", valuetype, member.type)
-        end
-    end
-    
-    upperclass:throw("__newindex failure")
 end
 
 --
@@ -389,7 +354,7 @@ end
 function upperclass:lookup(classdef, key)
     local member = classdef.members[key]
     local parent = classdef.parent
-    
+
     if member ~= nil then
         return classdef, member
     elseif parent ~= nil then
@@ -412,7 +377,7 @@ function upperclass:lookupcaller(caller)
                 end
             end
             classdef = classdef.parent
-        end        
+        end
     end
 end
 
@@ -427,16 +392,10 @@ end
 -- Looks up a class type or data type
 --
 function upperclass:type(value)
-    local t = type(value)
+    local t = rawtype(value)
     if t == 'table' then
-        local obj = rawget(value, '__obj')
-        if obj ~= nil then
-            if obj.classdef.members['__type'] ~= nil then
-                local __type = obj.classdef.members['__type'].default
-                return __type(value)
-            else
-                return obj.classdef.name
-            end
+        if value.__isupperclass then
+            return value.__name
         else
             return t
         end
@@ -446,7 +405,203 @@ function upperclass:type(value)
 end
 
 --
+-- __call
+--
+function RuntimeMetatable:__call(...)
+    local classdef = registry[self.__name]
+
+    local instance = setmetatable({
+        __name = classdef.name;
+        __overrides = {};
+        __isinstance = true;
+        __isupperclass = true;
+        __mmindex=true;
+        __mmnewindex=true;
+    }, RuntimeMetatable)
+
+    if classdef.members['init'] ~= nil then
+        instance:init(...)
+    end
+
+    return instance
+end
+
+--
+-- __index
+--
+function RuntimeMetatable:__index(key)    
+    local classdef = registry[self.__name]
+    
+    local mdef, member = classdef, nil
+    while mdef ~= nil do
+        if mdef.members[key] ~= nil then
+            member = mdef.members[key]
+            break
+        else
+            mdef = mdef.parent
+        end
+    end
+
+    if member == nil and key ~= '__index' and self.__mmindex and classdef.members['__index'] ~= nil  then
+        self.__mmindex = false
+        local __index = classdef.members['__index'].default
+        local val = __index(self, key)
+        self.__mmindex = true
+        return val   
+    end
+
+    if member == nil then
+        upperclass:throw("Attempt to index non-existant member '%s' is disallowed", key)
+    end
+
+    -- Bool indicating if we are of proper scope
+    local scopepermit = false
+
+    -- Check scopes
+    if rawdebug == nil or member.getter == 'public' then
+        scopepermit = true
+    elseif member.getter == 'private' or member.getter == 'protected' then
+        local caller = rawdebug.getinfo(2, 'f').func        
+        for _, func in ipairs(mdef.callers[member.getter]) do
+            if func == caller then
+                scopepermit = true
+                break
+            end
+        end
+    end
+    
+    if scopepermit then
+        local override = self.__overrides[key]
+        if override == nil then
+            return member.default
+        else
+            return override.value
+        end
+    else
+        upperclass:throw("Attempt to access '%s' member '%s' of class '%s' from outside of class is disallowed", member.getter, key, mdef.name)
+    end
+
+    upperclass:throw("__index failure")
+end
+
+--
+-- __newindex
+--
+function RuntimeMetatable:__newindex(key, value)
+    local classdef = registry[self.__name]
+    
+    -- Locate member and member classdef
+    local mdef, member = classdef, nil      
+    while mdef ~= nil do
+        if mdef.members[key] ~= nil then
+            member = mdef.members[key]
+            break
+        else
+            mdef = mdef.parent
+        end
+    end
+
+    -- If no member call user defined metamethod
+    if member == nil then
+        if key ~= '__newindex' and self.__mmnewindex and classdef.members['__newindex'] ~= nil then
+            obj.__mmnewindex = false
+            local __newindex = classdef.members['__newindex'].default
+            __newindex(self, key, value)
+            self.__mmnewindex = true
+            return
+        else
+            upperclass:throw("Attempt to newindex non-existant member '%s' is disallowed", key)
+        end
+    end
+
+    -- Bool indicating if we are of proper scope
+    local scopepermit = false
+
+    -- Scope check
+    local msetter = member.setter
+    if rawdebug == nil or msetter == 'public' then
+        scopepermit = true
+    elseif msetter == 'private' or msetter == 'protected' then
+        local caller = rawdebug.getinfo(2, 'f').func       
+        for _, func in ipairs(mdef.callers[msetter]) do
+            if func == caller then
+                scopepermit = true
+                break
+            end
+        end        
+    else
+        upperclass:throw("Attempt to assign value to member with setter scope of '%s' is disallowed", member.setter)
+    end
+
+    -- Fail if we did not pass scope check
+    if scopepermit == false then
+        upperclass:throw("Attempt to assign value to '%s' member '%s' from class '%s' failed. Caller is not in scope", member.setter, key, mdef.name)
+    end
+
+    local override = self.__overrides[key]        
+    
+    -- Check nil assignment
+    if value == nil and member.nullable then
+        if override ~= nil then
+            override.value = value
+        else
+            self.__overrides[key] = {value=value}
+        end
+        return
+    end
+    
+    local valuetype = upperclass:type(value)
+    
+    -- Check type assignment
+    for _, t in ipairs(member.types) do
+        if t == 'any' or valuetype == t then
+            if override ~= nil then
+                override.value = value
+            else
+                self.__overrides[key] = {value=value}
+            end
+            return
+        end
+    end
+        
+    -- Check interface assignment
+    if valuetype == 'table' and value.__isupperclass then
+        for _, impl in ipairs(registry[value.__name].impliments) do
+            for _, t in ipairs(member.types) do
+                if t == impl or t == impl.name then
+                    if override ~= nil then
+                        override.value = value
+                    else
+                        self.__overrides[key] = {value=value}
+                    end
+                    return
+                end
+            end
+        end
+    end
+    
+    upperclass:throw("Attempt to assign value to member '%s' of class '%s' with mismatched value of type '%s' is disallowed", key, mdef.name, valuetype)
+end
+
+--
+-- Expect table to use for all expect calls
+-- Must be set at the bottom of the module
+-- to ensure all expect methods have been parsed
+--
+expectTable = {
+    __fallthrough = false;
+    __errors = {};
+    __value = nil;        
+    call = upperclass.expect_call;
+    gt = upperclass.expect_gt;
+    gte = upperclass.expect_gte;
+    ne = upperclass.expect_ne;
+    neq = upperclass.expect_ne;
+    type = upperclass.expect_type;
+    throw = upperclass.expect_throw;
+}
+
+--
 -- Return upperclass
 --
-upperclass.__registry = registry
 return upperclass
